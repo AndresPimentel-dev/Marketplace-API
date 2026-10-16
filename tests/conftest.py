@@ -1,4 +1,8 @@
 import os
+
+os.environ["DATABASE_URL"] = "sqlite:///./test.db"
+os.environ["SECRET_KEY"] = "supersecretallaveparqatokensfalsosdeprueba"
+
 from datetime import UTC, datetime, timedelta
 
 import pytest
@@ -7,6 +11,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from app.core.security import create_access_token
+from app.db.session import Base, get_db
+from app.main import app
 from app.models.models import (
     OrdersStatus,
     OrdersTable,
@@ -16,12 +22,6 @@ from app.models.models import (
     SkinsTable,
     UsersTable,
 )
-
-os.environ["DATABASE_URL"] = "sqlite:///./test.db"
-os.environ["SECRET_KEY"] = "supersecretallaveparqatokensfalsosdeprueba"
-
-from app.db.session import Base, get_db
-from app.main import app
 
 DB_URL = "sqlite:///./test.db"
 engine = create_engine(url=DB_URL, connect_args={"check_same_thread": False})
