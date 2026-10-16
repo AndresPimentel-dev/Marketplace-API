@@ -1,0 +1,136 @@
+services:
+  api:
+    # aqui usamos build para el dockerfile
+    build: .
+    container_name: ecomerce_api
+    restart: always
+    environment:
+      - SECRET_KEY=${SECRET_KEY}
+      - DATABASE_URL=postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database:5432/skin_ecomerce
+    ports:
+      - "8000:8000"
+    depends_on:
+      database:
+        condition: service_started
+      migrations:
+        condition: service_completed_successfully
+      tests_and_quality:
+        condition: service_completed_successfully
+  database:
+    image: postgres:15
+    container_name: database_container
+    restart: always
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=skin_ecomerce
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+  redis:
+    image: redis:7
+    container_name: redis_container
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    #hace que redis ademas de guardar en ram
+    #tambien guerde en los volumenes para no perder nada
+    command: redis-server --appendonly yes
+    depends_on:
+      - database
+  migrations:
+    build: .
+    container_name: database_migrations
+    environment:
+      - SECRET_KEY=${SECRET_KEY}
+      - DATABASE_URL=postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database:5432/skin_ecomerce
+      - ADMIN_EMAIL=${ADMIN_EMAIL}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - PYTHONUNBUFFERED=1
+    #command sobre escribe el comando el el dockerfile
+    command: >
+      sh -c "sleep 5 && alembic upgrade head && python create_admin.py"
+    depends_on:
+      database:
+        condition: service_started
+  tests_and_quality:
+    build: .
+    container_name: tests_and_quality
+    environment:
+          - SECRET_KEY=${SECRET_KEY}
+          - DATABASE_URL=postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database:5432/skin_ecomerce
+    command: python -m pytest && ruff check . && ruff format --check
+  #=====================================================================
+  #observabilidad
+  #=====================================================================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus_container
+    restart: always
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    depends_on:
+      - api
+  loki:
+    image: grafana/loki:latest
+    container_name: loki
+    volumes:
+      - ./loki/loki-config.yml:/etc/loki/loki-config.yml
+    command: -config.file=/etc/loki/loki-config.yml
+    ports:
+      - "3100:3100"
+    restart: always
+
+  # 2. El recolector moderno (Reemplazo estándar de Promtail)
+  alloy:
+    image: grafana/alloy:latest
+    container_name: alloy
+    volumes:
+      - ./alloy/config.alloy:/etc/alloy/config.alloy
+      - /var/run/docker.sock:/var/run/docker.sock:ro # Permite leer los logs de los otros contenedores
+    command:
+      - run
+      - /etc/alloy/config.alloy
+      - --server.http.listen-addr=0.0.0.0:12345
+    ports:
+      - "12345:12345"
+    depends_on:
+      - loki
+    restart: always
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana_container
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus
+      - loki
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources
+  worker:
+    build: .
+    container_name: nexus_worker
+    restart: always
+    command: celery -A app.worker.celery_app.celery_app worker --loglevel=info
+    environment:
+      - SECRET_KEY=${SECRET_KEY}
+      - DATABASE_URL=postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database:5432/skin_ecomerce
+    depends_on:
+      - database
+      - redis
+
+
+volumes:
+  postgres_data:
+  redis_data:
+  grafana_data:

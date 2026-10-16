@@ -1,0 +1,29 @@
+#API
+fastapi
+uvicorn[standard]
+#Database
+sqlalchemy
+alembic
+psycopg2-binary
+#config y seguridad
+pydantic[email]
+pyjwt
+#yanosenecesitapasslib ahora pwdlib
+pwdlib[argon2]
+pydantic-settings
+# Tareas Asincronas
+celery
+redis
+#observabilidad
+prometheus-client
+python-json-logger
+python-logging-loki # nuevaslibretas actualizada
+
+#testing
+pytest
+ruff
+mypy
+
+#necesarias para correr fastapi que no vienen en python
+python-multipart
+httpx2

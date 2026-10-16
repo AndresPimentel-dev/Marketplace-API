@@ -1,0 +1,46 @@
+name: CI project tasks management API
+
+on:
+  push:
+    branches: [ "main", "master"]
+  pull_request:
+    branches: ["main", "master"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+  
+    steps:
+  
+    - name: clone code repository
+      uses: actions/checkout@v4
+  
+    - name: get python ready
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+  
+    - name: install libraries or dependencies and other neccesary things
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+  
+    - name: run python test
+      run: python -m compileall .
+
+    - name: run ruff test
+      run: ruff check .
+  
+    - name: run unit tests and API tests
+      run: python -m pytest
+
+    - name: run Docker compose to check
+      env:
+        SECRET_KEY: ${{secrets.SECRET_KEY}}
+        POSTGRES_PASSWORD: ${{secrets.POSTGRES_PASSWORD}}
+      run: docker compose up --build -d
+
+    - name: Esperar y verificar docker compose
+      run: |
+        sleep 40
+        docker compose ps
