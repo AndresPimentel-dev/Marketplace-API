@@ -1,4 +1,4 @@
-name: CI project tasks management API
+name: CI project Marketplace API
 
 on:
   push:
