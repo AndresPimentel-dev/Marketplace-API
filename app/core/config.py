@@ -2,7 +2,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class SettingsClass(BaseSettings):
-    DATABASE_URL: str = "sqlite:///./test.db"
+    DATABASE_URL: str
     SECRET_KEY: str
     # se pone para que ignore variables de entorno extras como la db password
     model_config = SettingsConfigDict(
