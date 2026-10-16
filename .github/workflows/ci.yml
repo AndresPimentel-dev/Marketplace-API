@@ -38,6 +38,9 @@ jobs:
       env:
         SECRET_KEY: ${{secrets.SECRET_KEY}}
         POSTGRES_PASSWORD: ${{secrets.POSTGRES_PASSWORD}}
+        POSTGRES_USER: ${{secrets.POSTGRES_USER}}
+        ADMIN_EMAIL: ${{secrets.ADMIN_EMAIL}}
+        ADMIN_PASSWORD: ${{secrets.ADMIN_PASSWORD}}
       run: docker compose up --build -d
 
     - name: Esperar y verificar docker compose
