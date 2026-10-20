@@ -47,7 +47,7 @@ def test_get_by_email_repository(get_db_test):
 
 def test_get_by_non_existing_email_repository(get_db_test):
     repo = UserRepository(db=get_db_test)
-    user = repo.get_user_by_email("inexintingemail@gmail")
+    user = repo.get_user_by_email("nonexistentemail@gmail.com")
 
     assert user is None
 
@@ -373,21 +373,21 @@ def test_get_skins_with_filters_and_pagination_by_all(get_db_test):
     assert request[0].slug == "redline"
 
 
-def test_get_notexisting_skins_with_filters_and_pagination_by_category(get_db_test):
+def test_get_nonexisting_skins_with_filters_and_pagination_by_category(get_db_test):
     repo = SkinsRepository(db=get_db_test)
     request = repo.get_skins(category="weapon")
 
     assert request == []
 
 
-def test_get_notexisting_skins_with_filters_and_pagination_by_rarity(get_db_test):
+def test_get_nonexisting_skins_with_filters_and_pagination_by_rarity(get_db_test):
     repo = SkinsRepository(db=get_db_test)
     request = repo.get_skins(rarity="weapon")
 
     assert request == []
 
 
-def test_get_notexisting_skins_with_filters_and_pagination_by_currency(get_db_test):
+def test_get_nonexisting_skins_with_filters_and_pagination_by_currency(get_db_test):
     repo = SkinsRepository(db=get_db_test)
     request = repo.get_skins(currency="USD")
 
@@ -416,7 +416,7 @@ def test_get_cart_by_user_id(get_db_test):
     assert response.user_id == 1
 
 
-def test_get_nonexisting_cart_by_ser_id(get_db_test):
+def test_get_nonexisting_cart_by_user_id(get_db_test):
     repo = CartRepository(db=get_db_test)
     response = repo.get_cart_by_user_id(user_id=1)
 

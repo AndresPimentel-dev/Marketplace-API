@@ -9,7 +9,7 @@ class SkinCreate(BaseModel):
     name: str = Field(description="skins name", min_length=1, max_length=50)
     slug: str = Field(description="skin slug", min_length=1, max_length=100)
     description: str = Field(
-        description="skin description", min_length=1, max_length=100
+        description="skin description", min_length=1, max_length=255
     )
     ########## en los enums no se una min o max lenght
     category: SkinCategory = Field(description="skin category")
@@ -46,9 +46,9 @@ class SkinCreate(BaseModel):
 
 class SkinResponse(BaseModel):
     id: int = Field(description="Skin unique ID")
-    name: str = Field(description="skin name")
-    slug: str = Field()
-    description: str = Field(description="skin description")
+    name: str = Field(description="skin name", min_length=1, max_length=50)
+    slug: str = Field(description="skin slug", min_length=1, max_length=100)
+    description: str = Field(description="skin description", min_length=1, max_length=255)
     category: SkinCategory = Field(description="skin category")
     rarity: SkinRarity = Field(description="skin rarity")
     price: Decimal = Field(description="skin price")
@@ -76,7 +76,7 @@ class SkinUpdate(BaseModel):
         default=None,
     )
     description: str | None = Field(
-        description="skin description", min_length=1, max_length=100, default=None
+        description="skin description", min_length=1, max_length=255, default=None
     )
     category: SkinCategory | None = Field(description="skin category", default=None)
     rarity: SkinRarity | None = Field(description="skin rarity", default=None)

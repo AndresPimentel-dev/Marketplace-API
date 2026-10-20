@@ -14,18 +14,18 @@ class UserCreate(BaseModel):
 
 
 class LoginRequest(BaseModel):
-    email: EmailStr
-    password: str
+    email: EmailStr = Field(description="User email", min_length=1, max_length=50)
+    password: str = Field(description="User password", min_length=1, max_length=100)
 
 
 ####refreshtoken@#############
 
 
 class TokenResponse(BaseModel):
-    access_token: str = Field(description="access token in str")
-    refresh_token: str = Field(description="refresh token")
-    token_type: str = Field(description="token type")
+    access_token: str = Field(description="access token in str", min_length=1, max_length=1024)
+    refresh_token: str = Field(description="refresh token", min_length=1, max_length=1024)
+    token_type: str = Field(description="token type", min_length=1, max_length=50)
 
 
 class RefreshTokenRequest(BaseModel):
-    refresh_token: str
+    refresh_token: str = Field(min_length=1, max_length=1024)

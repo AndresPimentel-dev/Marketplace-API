@@ -947,7 +947,7 @@ docker compose exec api alembic upgrade head
 Once the API is running and the relevant routes are configured, FastAPI's interactive documentation is typically available at:
 
 ```text
-http://localhost:8000/docs
+http://localhost:443/docs
 ```
 
 The commands above describe the expected workflow. They are not guaranteed to work until the corresponding Docker, environment, and migration configuration has been implemented.

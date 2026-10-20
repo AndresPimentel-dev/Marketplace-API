@@ -27,8 +27,8 @@ class UsersTable(Base):
     __tablename__ = "userstable"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    email: Mapped[str] = mapped_column(index=True, unique=True, nullable=False)
-    hashed_password: Mapped[str] = mapped_column(String, nullable=False)
+    email: Mapped[str] = mapped_column(String(50), index=True, unique=True, nullable=False)
+    hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
     role: Mapped[UserRole] = mapped_column(
         SqlEnum(UserRole), default=UserRole.USER, nullable=False
     )
@@ -70,9 +70,9 @@ class SkinsTable(Base):
     __tablename__ = "skinstable"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String, nullable=False)
-    slug: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
-    description: Mapped[str] = mapped_column(String, nullable=False)
+    name: Mapped[str] = mapped_column(String(50), nullable=False)
+    slug: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False)
+    description: Mapped[str] = mapped_column(String(255), nullable=False)
     category: Mapped[SkinCategory] = mapped_column(
         SqlEnum(SkinCategory), nullable=False
     )
@@ -249,7 +249,7 @@ class PaymentsTable(Base):
         ForeignKey("orderstable.id"), nullable=False, unique=True
     )
     payment_id: Mapped[str] = mapped_column(
-        String, unique=True, index=True, nullable=False
+        String(100), unique=True, index=True, nullable=False
     )
     amount: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
     status: Mapped[PaymentStatus] = mapped_column(
@@ -270,9 +270,9 @@ class ProcessedWebhookEventsTable(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     event_id: Mapped[str] = mapped_column(
-        String, unique=True, index=True, nullable=False
+        String(100), unique=True, index=True, nullable=False
     )
-    event_type: Mapped[str] = mapped_column(String, nullable=False)
+    event_type: Mapped[str] = mapped_column(String(50), nullable=False)
     processed_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )

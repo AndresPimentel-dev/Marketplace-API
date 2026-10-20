@@ -5,6 +5,13 @@ from sqlalchemy import engine_from_config, pool
 from alembic import context
 from app.core.config import settings
 from app.db.session import Base
+from app.models.models import(  # noqa: F401
+    CartsTable, SkinsTable,
+    UsersTable, OrdersTable,
+    PaymentsTable, CartItemsTable,
+    OrdersItemsTable, InventoryItemsTable,
+    ProcessedWebhookEventsTable
+)
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

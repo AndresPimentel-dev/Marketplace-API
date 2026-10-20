@@ -46,7 +46,7 @@ def test_register_duplicated_email(cliente):
     assert response.json()["detail"] == "Email already used"
 
 
-def test_login_inexinting_email(cliente):
+def test_login_nonexistent_email(cliente):
     response = cliente.post(
         "/api/v5.0/auth/login",
         data={"username": "fakeemail@gmail.com", "password": "fakepassword"},

@@ -124,7 +124,7 @@ def test_register_duplicated_email(get_db_test):
         service.register_user(register_date)
 
 
-def test_login_user_exitoso(get_db_test):
+def test_login_user_success(get_db_test):
     mock_repo = MagicMock()
 
     pass_hash = hash_password("fakepassword")
@@ -133,29 +133,28 @@ def test_login_user_exitoso(get_db_test):
     mock_repo.get_user_by_email.return_value = fake_user
 
     service = AuthService(user_repository=mock_repo, db=get_db_test)
-    datos_login = LoginRequest(email="fakeemail@gmail.com", password="fakepassword")
+    login_data = LoginRequest(email="fakeemail@gmail.com", password="fakepassword")
 
-    tokens = service.login_user(datos_login)
+    tokens = service.login_user(login_data)
 
     assert tokens.access_token is not None
     assert tokens.refresh_token is not None
     assert tokens.token_type == "bearer"
 
 
-def test_login_user_usuario_no_encontrado(get_db_test):
+def test_login_user_not_found(get_db_test):
     mock_repo = MagicMock()
 
     mock_repo.get_user_by_email.return_value = None
 
     service = AuthService(user_repository=mock_repo, db=get_db_test)
-    datos_login = LoginRequest(email="fakeemail@gmail.com", password="fakepassword")
+    login_data = LoginRequest(email="fakeemail@gmail.com", password="fakepassword")
 
-    # aqui validamos que si se levante un error
     with pytest.raises(UnauthorizedException):
-        service.login_user(datos_login)
+        service.login_user(login_data)
 
 
-def test_login_user_password_incorrect(get_db_test):
+def test_login_user_incorrect_password(get_db_test):
     mock_repo = MagicMock()
     pass_hash = hash_password("fakepassword")
 
@@ -163,25 +162,25 @@ def test_login_user_password_incorrect(get_db_test):
     mock_repo.get_user_by_email.return_value = fake_user
 
     service = AuthService(user_repository=mock_repo, db=get_db_test)
-    datos_login = LoginRequest(
+    login_data = LoginRequest(
         email="fakeemail@gmail.com", password="fpassword_Incorrect"
     )
 
     with pytest.raises(UnauthorizedException):
-        service.login_user(datos_login)
+        service.login_user(login_data)
 
 
-def test_user_email_existing(get_db_test):
+def test_register_user_email_existing(get_db_test):
     mock_repo = MagicMock()
     mock_repo.get_user_by_email.return_value = UsersTable(
         email="emailexisting@gmail.com", hashed_password="fakepassword"
     )
 
     service = AuthService(user_repository=mock_repo, db=get_db_test)
-    datos_login = LoginRequest(email="fakeemail@gmail.com", password="fakepassword")
+    register_data = UserCreate(email="fakeemail@gmail.com", password="fakepassword")
 
     with pytest.raises(ConflictException):
-        service.register_user(datos_login)
+        service.register_user(register_data)
 
 
 # =======================================
@@ -254,11 +253,11 @@ def test_get_skin_by_slug_error(get_db_test):
 
 def test_get_skin_by_id(get_db_test):
     mock_repo = MagicMock()
-    mock_repo.get_skin_by_id.return_value = SkinsTable()
+    mock_repo.get_active_skin_by_id.return_value = SkinsTable()
 
     service = CatalogService(repository=mock_repo, db=get_db_test)
 
-    result = service.get_skin_by_id(skin_id=int)
+    result = service.get_skin_by_id(skin_id=1)
     assert result is not None
 
 
@@ -366,7 +365,6 @@ def test_add_item_to_cart(get_db_test):
     cart_repo.add_item.return_value = CartItemsTable(id=1, cart_id=1)
     service = CartService(cart_repo=cart_repo, skin_repo=skin_repo, db=get_db_test)
     response = service.add_item_to_cart(user_id=1, data=item_mock)
-    print(response)
     assert response is not None
     assert response.id == 1
 
@@ -379,7 +377,7 @@ def test_add_nonexisting_to_cart(get_db_test):
     service = CartService(cart_repo=cart_repo, skin_repo=skin_repo, db=get_db_test)
 
     with pytest.raises(NotFoundException):
-        service.add_item_to_cart(user_id=1, data=CartItemsTable(id=1, cart_id=1))
+        service.add_item_to_cart(user_id=1, data=CartItemCreate(skin_id=1, quantity=1))
 
 
 def test_update_item(get_db_test):

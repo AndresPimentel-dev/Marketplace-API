@@ -2,13 +2,12 @@ services:
   api:
     # aqui usamos build para el dockerfile
     build: .
+    image: ecomerce_app:latest
     container_name: ecomerce_api
     restart: always
     environment:
       - SECRET_KEY=${SECRET_KEY}
       - DATABASE_URL=postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database:5432/skin_ecomerce
-    ports:
-      - "8000:8000"
     depends_on:
       database:
         condition: service_started
@@ -16,6 +15,18 @@ services:
         condition: service_completed_successfully
       tests_and_quality:
         condition: service_completed_successfully
+  reverse_proxy:
+    container_name: caddy_container
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "443:443"
+      - "80:80"
+    volumes:
+      - caddy_data:/data
+      - ./Caddyfile:/etc/caddy/Caddyfile
+    depends_on:
+      - web
   database:
     image: postgres:15
     container_name: database_container
@@ -24,10 +35,25 @@ services:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=skin_ecomerce
-    ports:
-      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d skin_ecomerce"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+  database_test:
+    image: postgres:15
+    container_name: database_test_container
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=skin_ecomerce_test
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d skin_ecomerce_test"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
   redis:
     image: redis:7
     container_name: redis_container
@@ -43,6 +69,7 @@ services:
       - database
   migrations:
     build: .
+    image: ecomerce_app:latest
     container_name: database_migrations
     environment:
       - SECRET_KEY=${SECRET_KEY}
@@ -55,14 +82,18 @@ services:
       sh -c "sleep 5 && alembic upgrade head && python create_admin.py"
     depends_on:
       database:
-        condition: service_started
+        condition: service_healthy
   tests_and_quality:
     build: .
+    image: ecomerce_app:latest
     container_name: tests_and_quality
     environment:
-          - SECRET_KEY=${SECRET_KEY}
-          - DATABASE_URL=postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database:5432/skin_ecomerce
+      - SECRET_KEY=${SECRET_KEY}
+      - DATABASE_URL=postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database_test:5432/skin_ecomerce_test
     command: python -m pytest && ruff check . && ruff format --check
+    depends_on:
+      database_test:
+        condition: service_healthy
   #=====================================================================
   #observabilidad
   #=====================================================================
@@ -119,6 +150,7 @@ services:
       - ./grafana/datasources:/etc/grafana/provisioning/datasources
   worker:
     build: .
+    image: ecomerce_app:latest
     container_name: nexus_worker
     restart: always
     command: celery -A app.worker.celery_app.celery_app worker --loglevel=info

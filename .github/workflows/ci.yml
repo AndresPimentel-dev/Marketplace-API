@@ -9,29 +9,47 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-  
+
+    services:
+      postgres_test:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgrespassword
+          POSTGRES_DB: skin_ecomerce_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
-  
+
     - name: clone code repository
       uses: actions/checkout@v4
-  
+
     - name: get python ready
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'
-  
+
     - name: install libraries or dependencies and other neccesary things
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-  
+
     - name: run python test
       run: python -m compileall .
 
     - name: run ruff test
       run: ruff check .
-  
+
     - name: run unit tests and API tests
+      env:
+        SECRET_KEY: testsecretkey1234567890testsecretkey
+        DATABASE_URL: postgresql+psycopg2://postgres:postgrespassword@localhost:5432/skin_ecomerce_test
       run: python -m pytest
 
     - name: run Docker compose to check
@@ -45,5 +63,9 @@ jobs:
 
     - name: Esperar y verificar docker compose
       run: |
-        sleep 40
-        docker compose ps
+        sleep 5
+        curl -k -L --http1.1 --retry 10 \
+                   --retry-delay 3 \
+                   --retry-connrefused \
+                   --fail \
+                   https://localhost/

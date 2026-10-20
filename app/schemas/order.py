@@ -44,4 +44,6 @@ class OrderListResponse(BaseModel):
 
 class PaymentCreateRequest(BaseModel):
     order_id: int
-    payment_method: str = Field("mock_card", description="Método de pago simulado")
+    payment_method: str = Field(
+        "mock_card", description="Método de pago simulado", min_length=1, max_length=50
+    )
