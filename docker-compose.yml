@@ -26,7 +26,7 @@ services:
       - caddy_data:/data
       - ./Caddyfile:/etc/caddy/Caddyfile
     depends_on:
-      - web
+      - api
   database:
     image: postgres:15
     container_name: database_container
@@ -166,3 +166,4 @@ volumes:
   postgres_data:
   redis_data:
   grafana_data:
+  caddy_data:

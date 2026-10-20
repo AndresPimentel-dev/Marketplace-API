@@ -22,8 +22,12 @@ class LoginRequest(BaseModel):
 
 
 class TokenResponse(BaseModel):
-    access_token: str = Field(description="access token in str", min_length=1, max_length=1024)
-    refresh_token: str = Field(description="refresh token", min_length=1, max_length=1024)
+    access_token: str = Field(
+        description="access token in str", min_length=1, max_length=1024
+    )
+    refresh_token: str = Field(
+        description="refresh token", min_length=1, max_length=1024
+    )
     token_type: str = Field(description="token type", min_length=1, max_length=50)
 
 

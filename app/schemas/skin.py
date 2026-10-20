@@ -48,7 +48,9 @@ class SkinResponse(BaseModel):
     id: int = Field(description="Skin unique ID")
     name: str = Field(description="skin name", min_length=1, max_length=50)
     slug: str = Field(description="skin slug", min_length=1, max_length=100)
-    description: str = Field(description="skin description", min_length=1, max_length=255)
+    description: str = Field(
+        description="skin description", min_length=1, max_length=255
+    )
     category: SkinCategory = Field(description="skin category")
     rarity: SkinRarity = Field(description="skin rarity")
     price: Decimal = Field(description="skin price")

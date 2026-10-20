@@ -80,9 +80,7 @@ class PaymentService:
                             order_id=order.id,
                             acquired_at=datetime.now(UTC),
                         )
-                        self.db_add_inventory(
-                            inventory_item
-                        )  # O tu método para añadir al inventario
+                        self.db.add(inventory_item)
 
         elif status == "failed":
             order.status = OrdersStatus.PAYMENT_FAILED

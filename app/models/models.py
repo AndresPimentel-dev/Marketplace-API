@@ -27,7 +27,9 @@ class UsersTable(Base):
     __tablename__ = "userstable"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    email: Mapped[str] = mapped_column(String(50), index=True, unique=True, nullable=False)
+    email: Mapped[str] = mapped_column(
+        String(50), index=True, unique=True, nullable=False
+    )
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
     role: Mapped[UserRole] = mapped_column(
         SqlEnum(UserRole), default=UserRole.USER, nullable=False
@@ -71,7 +73,9 @@ class SkinsTable(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(50), nullable=False)
-    slug: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False)
+    slug: Mapped[str] = mapped_column(
+        String(100), unique=True, index=True, nullable=False
+    )
     description: Mapped[str] = mapped_column(String(255), nullable=False)
     category: Mapped[SkinCategory] = mapped_column(
         SqlEnum(SkinCategory), nullable=False
