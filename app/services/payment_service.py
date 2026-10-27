@@ -13,9 +13,7 @@ from app.repositories.order_repository import OrderRepository
 from app.repositories.payment_repository import PaymentRepository
 from app.repositories.skin_repository import SkinsRepository
 
-PAYMENT_COUNTER = Counter(
-    "payments_total", "Total payments processed", ["status"]
-)
+PAYMENT_COUNTER = Counter("payments_total", "Total payments processed", ["status"])
 
 
 class PaymentService:

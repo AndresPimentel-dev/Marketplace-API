@@ -1,7 +1,6 @@
-from ast import YieldFrom
-from yaml import compose_all
-from alembic.config import Config
 import os
+
+from alembic.config import Config
 
 from alembic import command
 
@@ -17,9 +16,9 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
-from app.core.security import create_access_token
 from app.core.config import settings
-from app.db.session import Base, get_db
+from app.core.security import create_access_token
+from app.db.session import get_db
 from app.main import app
 from app.models.models import (
     OrdersStatus,
@@ -48,8 +47,9 @@ def create_tables():
     engine.dispose()
 
     command.upgrade(alembic_cfg, "head")
-    
+
     yield
+
 
 @pytest.fixture
 def get_db_test():

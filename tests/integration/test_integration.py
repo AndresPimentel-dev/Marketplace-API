@@ -1,19 +1,16 @@
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from decimal import Decimal
 
 from app.core.security import hash_password
 from app.models.models import (
-    InventoryItemsTable,
     OrdersStatus,
     OrdersTable,
-    SkinsTable,
     UsersTable,
 )
 from app.repositories.cart_repository import CartRepository
 from app.repositories.inventory_repository import InventoryRepository
 from app.repositories.order_repository import OrderRepository
-from app.repositories.skin_repository import (
-    SkinsRepository, SkinCategory, SkinRarity)
+from app.repositories.skin_repository import SkinCategory, SkinRarity, SkinsRepository
 from app.repositories.user_repository import UserRepository
 from app.schemas.skin import SkinCreate, SkinUpdate
 
@@ -427,8 +424,7 @@ def test_get_nonexisting_cart_by_user_id(get_db_test):
 def test_add_item(get_db_test, normal_user, sample_skin):
     repo = CartRepository(db=get_db_test)
     cart = repo.create_cart(user_id=normal_user.id)
-    response = repo.add_item(cart_id=cart.id, skin_id=sample_skin.id
-    , quantity=1)
+    response = repo.add_item(cart_id=cart.id, skin_id=sample_skin.id, quantity=1)
 
     assert response is not None
     assert response.skin_id == sample_skin.id
@@ -699,13 +695,16 @@ def test_update_order_status_success(get_db_test):
 #            TESTS INVENTORY_REPOSITORY
 # ====================================================
 
-def test_create_inventory_item_success(get_db_test, sample_skin, normal_user,
-sample_order):
+
+def test_create_inventory_item_success(
+    get_db_test, sample_skin, normal_user, sample_order
+):
     """Verifica la creación exitosa de un item en el inventario."""
     repo = InventoryRepository(db=get_db_test)
 
-    item = repo.create(user_id=normal_user.id, 
-    skin_id=sample_skin.id, order_id=sample_order.id)
+    item = repo.create(
+        user_id=normal_user.id, skin_id=sample_skin.id, order_id=sample_order.id
+    )
     get_db_test.commit()
 
     assert item.id is not None
@@ -726,23 +725,30 @@ def test_get_by_id_success(get_db_test, normal_user, sample_skin, sample_order):
     """Verifica que se pueda obtener un item específico por su ID y su dueño."""
     repo = InventoryRepository(db=get_db_test)
 
-    created_item = repo.create(user_id=normal_user.id, skin_id=sample_skin.id, order_id=sample_order.id)
+    created_item = repo.create(
+        user_id=normal_user.id, skin_id=sample_skin.id, order_id=sample_order.id
+    )
     get_db_test.commit()
 
-    found_item = repo.get_by_id(inventory_item_id=created_item.id, user_id=normal_user.id)
-    
+    found_item = repo.get_by_id(
+        inventory_item_id=created_item.id, user_id=normal_user.id
+    )
+
     assert found_item is not None
     assert found_item.id == created_item.id
     assert found_item.skin_id == sample_skin.id
 
 
-def test_get_by_id_security_isolation_edge(get_db_test, normal_user, sample_order, sample_skin):
+def test_get_by_id_security_isolation_edge(
+    get_db_test, normal_user, sample_order, sample_skin
+):
     """Edge Case: Intentar acceder a un item de inventario que pertenece a otro usuario retorna None."""
     repo = InventoryRepository(db=get_db_test)
 
     # Item creado para el usuario 1
-    created_item = repo.create(user_id=sample_skin.id, skin_id=sample_skin.id,
-     order_id=sample_order.id)
+    created_item = repo.create(
+        user_id=sample_skin.id, skin_id=sample_skin.id, order_id=sample_order.id
+    )
     get_db_test.commit()
 
     # Usuario 2 intenta consultar el item del usuario 1
@@ -759,11 +765,15 @@ def test_get_by_id_not_found_edge(get_db_test):
     assert found_item is None
 
 
-def test_get_by_user_and_skin_success(get_db_test, sample_skin, normal_user, sample_order):
+def test_get_by_user_and_skin_success(
+    get_db_test, sample_skin, normal_user, sample_order
+):
     """Verifica que se pueda buscar un item de inventario cruzando el user_id y el skin_id."""
     repo = InventoryRepository(db=get_db_test)
 
-    repo.create(user_id=normal_user.id, skin_id=sample_skin.id, order_id=sample_order.id)
+    repo.create(
+        user_id=normal_user.id, skin_id=sample_skin.id, order_id=sample_order.id
+    )
     get_db_test.commit()
 
     found = repo.get_by_user_and_skin(user_id=normal_user.id, skin_id=sample_skin.id)

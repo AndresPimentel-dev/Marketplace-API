@@ -69,6 +69,15 @@ services:
       database_test:
         condition: service_healthy
 
+  tests_cleanup:
+    image: docker:cli
+    container_name: database_cleaner
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: docker stop database_test
+    depends_on:
+      tests_and_quality:
+        condition: service_completed_successfully
   api:
     build: .
     image: ecomerce_app:latest
