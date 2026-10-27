@@ -66,12 +66,11 @@ def test_concurrency_create_order_endpoint(get_db_test, cliente):
             "/api/v5.0/orders", headers={"Authorization": f"Bearer {token}"}
         )
 
-    with patch("app.services.order_service.expire_stale_reservations.apply_async"):
-        with ThreadPoolExecutor(max_workers=2) as executor:
-            future_1 = executor.submit(post_order, token_user_1)
-            future_2 = executor.submit(post_order, token_user_2)
-            response_1 = future_1.result()
-            response_2 = future_2.result()
+    with patch("app.services.order_service.expire_stale_reservations.apply_async"), ThreadPoolExecutor(max_workers=2) as executor:
+        future_1 = executor.submit(post_order, token_user_1)
+        future_2 = executor.submit(post_order, token_user_2)
+        response_1 = future_1.result()
+        response_2 = future_2.result()
 
     statuses = [response_1.status_code, response_2.status_code]
     assert 201 in statuses
