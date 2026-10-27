@@ -26,7 +26,9 @@ def get_payment_service(
     )
 
 
-def verify_webhook_signature(payload_bytes: bytes, signature_header: str | None) -> None:
+def verify_webhook_signature(
+    payload_bytes: bytes, signature_header: str | None
+) -> None:
     if not signature_header:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

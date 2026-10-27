@@ -10,7 +10,7 @@ from app.api.dependencies.auth_dependencies import get_current_user
 from app.api.dependencies.order_dependencies import get_order_service
 from app.core.config import settings
 from app.db.session import get_db
-from app.models.models import OrdersStatus, PaymentStatus, PaymentsTable, UsersTable
+from app.models.models import OrdersStatus, PaymentsTable, PaymentStatus, UsersTable
 from app.repositories.payment_repository import PaymentRepository
 from app.schemas.order import OrderListResponse, OrderResponse, PaymentCreateRequest
 from app.services.order_service import OrderService
@@ -71,7 +71,9 @@ def initiate_mock_payment(
     order = order_service.get_order(user_id=current_user.id, order_id=payload.order_id)
 
     if order.status != OrdersStatus.PENDING_PAYMENT:
-        raise HTTPException(status_code=409, detail=f"Order is already in state: {order.status}")
+        raise HTTPException(
+            status_code=409, detail=f"Order is already in state: {order.status}"
+        )
 
     # 2. Generar IDs únicos para la simulación
     payment_id = f"pay_{current_user.id}_{order.id}"

@@ -545,11 +545,15 @@ def test_checkout_missing_order_id_field(cliente, user_token_headers):
 # ==========================================
 
 
-def test_payment_webhook_missing_and_invalid_signature(cliente, user_token_headers, sample_order):
+def test_payment_webhook_missing_and_invalid_signature(
+    cliente, user_token_headers, sample_order
+):
     """Rechazar webhooks con firma faltante o inválida."""
     # Checkout para crear el pago pendiente
     checkout_res = cliente.post(
-        "/api/v5.0/checkout", json={"order_id": sample_order.id}, headers=user_token_headers
+        "/api/v5.0/checkout",
+        json={"order_id": sample_order.id},
+        headers=user_token_headers,
     )
     payload = checkout_res.json()["simulated_webhook_payload_to_send"]
 
@@ -560,16 +564,22 @@ def test_payment_webhook_missing_and_invalid_signature(cliente, user_token_heade
 
     # 2. Firma inválida
     res_bad_sig = cliente.post(
-        "/webhooks/payments", json=payload, headers={"X-Signature": "invalid_signature_hex"}
+        "/webhooks/payments",
+        json=payload,
+        headers={"X-Signature": "invalid_signature_hex"},
     )
     assert res_bad_sig.status_code == 401
     assert "Invalid webhook signature" in res_bad_sig.json()["detail"]
 
 
-def test_payment_webhook_valid_success_and_duplicate(cliente, user_token_headers, sample_order, get_db_test):
+def test_payment_webhook_valid_success_and_duplicate(
+    cliente, user_token_headers, sample_order, get_db_test
+):
     """Procesar webhook exitoso válidamente y verificar idempotencia en duplicados."""
     checkout_res = cliente.post(
-        "/api/v5.0/checkout", json={"order_id": sample_order.id}, headers=user_token_headers
+        "/api/v5.0/checkout",
+        json={"order_id": sample_order.id},
+        headers=user_token_headers,
     )
     data = checkout_res.json()
     payload = data["simulated_webhook_payload_to_send"]
@@ -599,15 +609,20 @@ def test_payment_webhook_valid_success_and_duplicate(cliente, user_token_headers
     assert dup_res.json()["status"] == "already_processed"
 
 
-def test_payment_webhook_failed_payment(cliente, user_token_headers, sample_order, get_db_test):
+def test_payment_webhook_failed_payment(
+    cliente, user_token_headers, sample_order, get_db_test
+):
     """Procesar webhook con pago fallido y verificar actualización de estado."""
     import hashlib
     import hmac
     import json
+
     from app.core.config import settings
 
     checkout_res = cliente.post(
-        "/api/v5.0/checkout", json={"order_id": sample_order.id}, headers=user_token_headers
+        "/api/v5.0/checkout",
+        json={"order_id": sample_order.id},
+        headers=user_token_headers,
     )
     data = checkout_res.json()
     payload = data["simulated_webhook_payload_to_send"]
