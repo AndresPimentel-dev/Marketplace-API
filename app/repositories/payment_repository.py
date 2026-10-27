@@ -14,6 +14,10 @@ class PaymentRepository:
         stmt = select(PaymentsTable).where(PaymentsTable.order_id == order_id)
         return self.db.scalars(stmt).first()
 
+    def get_payment_by_payment_id(self, payment_id: str) -> PaymentsTable | None:
+        stmt = select(PaymentsTable).where(PaymentsTable.payment_id == payment_id)
+        return self.db.scalars(stmt).first()
+
     def create_payment(self, payment: PaymentsTable) -> PaymentsTable:
         self.db.add(payment)
         self.db.flush()

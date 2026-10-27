@@ -538,3 +538,96 @@ def test_checkout_missing_order_id_field(cliente, user_token_headers):
     """Edge Case: Enviar payload de checkout vacío u omitiendo el order_id."""
     response = cliente.post("/api/v5.0/checkout", json={}, headers=user_token_headers)
     assert response.status_code == 422
+
+
+# ==========================================
+#          TESTS DE WEBHOOK DE PAGOS
+# ==========================================
+
+
+def test_payment_webhook_missing_and_invalid_signature(cliente, user_token_headers, sample_order):
+    """Rechazar webhooks con firma faltante o inválida."""
+    # Checkout para crear el pago pendiente
+    checkout_res = cliente.post(
+        "/api/v5.0/checkout", json={"order_id": sample_order.id}, headers=user_token_headers
+    )
+    payload = checkout_res.json()["simulated_webhook_payload_to_send"]
+
+    # 1. Sin firma
+    res_no_sig = cliente.post("/webhooks/payments", json=payload)
+    assert res_no_sig.status_code == 401
+    assert "Missing webhook signature" in res_no_sig.json()["detail"]
+
+    # 2. Firma inválida
+    res_bad_sig = cliente.post(
+        "/webhooks/payments", json=payload, headers={"X-Signature": "invalid_signature_hex"}
+    )
+    assert res_bad_sig.status_code == 401
+    assert "Invalid webhook signature" in res_bad_sig.json()["detail"]
+
+
+def test_payment_webhook_valid_success_and_duplicate(cliente, user_token_headers, sample_order, get_db_test):
+    """Procesar webhook exitoso válidamente y verificar idempotencia en duplicados."""
+    checkout_res = cliente.post(
+        "/api/v5.0/checkout", json={"order_id": sample_order.id}, headers=user_token_headers
+    )
+    data = checkout_res.json()
+    payload = data["simulated_webhook_payload_to_send"]
+    signature = data["simulated_webhook_signature"]
+
+    # 1. Primer webhook: Exitoso
+    res = cliente.post(
+        "/webhooks/payments",
+        json=payload,
+        headers={"X-Signature": signature},
+    )
+    assert res.status_code == 200
+    assert res.json()["status"] == "success"
+
+    # Verificar estado de orden en BD
+    get_db_test.refresh(sample_order)
+    assert sample_order.status == "payment_confirmed"
+    assert sample_order.payment.status.value == "succeeded"
+
+    # 2. Webhook duplicado: Idempotente
+    dup_res = cliente.post(
+        "/webhooks/payments",
+        json=payload,
+        headers={"X-Signature": signature},
+    )
+    assert dup_res.status_code == 200
+    assert dup_res.json()["status"] == "already_processed"
+
+
+def test_payment_webhook_failed_payment(cliente, user_token_headers, sample_order, get_db_test):
+    """Procesar webhook con pago fallido y verificar actualización de estado."""
+    import hashlib
+    import hmac
+    import json
+    from app.core.config import settings
+
+    checkout_res = cliente.post(
+        "/api/v5.0/checkout", json={"order_id": sample_order.id}, headers=user_token_headers
+    )
+    data = checkout_res.json()
+    payload = data["simulated_webhook_payload_to_send"]
+    payload["status"] = "failed"
+    payload["event_id"] = f"{payload['event_id']}_fail"
+
+    raw_body = json.dumps(payload, separators=(",", ":")).encode("utf-8")
+    sig = hmac.new(
+        settings.WEBHOOK_SECRET.encode("utf-8"),
+        msg=raw_body,
+        digestmod=hashlib.sha256,
+    ).hexdigest()
+
+    res = cliente.post(
+        "/webhooks/payments",
+        data=raw_body,
+        headers={"Content-Type": "application/json", "X-Signature": sig},
+    )
+    assert res.status_code == 200
+
+    get_db_test.refresh(sample_order)
+    assert sample_order.status == "payment_failed"
+    assert sample_order.payment.status.value == "failed"

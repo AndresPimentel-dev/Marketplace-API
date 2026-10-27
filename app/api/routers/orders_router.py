@@ -1,8 +1,17 @@
+import hashlib
+import hmac
+import json
+from datetime import UTC, datetime
+
 from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy.orm import Session
 
 from app.api.dependencies.auth_dependencies import get_current_user
 from app.api.dependencies.order_dependencies import get_order_service
-from app.models.models import UsersTable
+from app.core.config import settings
+from app.db.session import get_db
+from app.models.models import OrdersStatus, PaymentStatus, PaymentsTable, UsersTable
+from app.repositories.payment_repository import PaymentRepository
 from app.schemas.order import OrderListResponse, OrderResponse, PaymentCreateRequest
 from app.services.order_service import OrderService
 
@@ -50,6 +59,7 @@ def initiate_mock_payment(
     payload: PaymentCreateRequest,
     current_user: UsersTable = Depends(get_current_user),  # noqa: B008
     order_service: OrderService = Depends(get_order_service),  # noqa: B008
+    db: Session = Depends(get_db),  # noqa: B008
 ):
     """
     Simula que el usuario va a pagar su orden.
@@ -58,34 +68,53 @@ def initiate_mock_payment(
     """
 
     # 1. Validar que la orden pertenezca al usuario y esté en estado PENDING_PAYMENT
-    # (Esto lo puedes delegar a tu OrderService o PaymentService)
     order = order_service.get_order(user_id=current_user.id, order_id=payload.order_id)
 
-    if order.status == "payment_confirmed":
-        raise HTTPException(status_code=409, detail="order already processed")
+    if order.status != OrdersStatus.PENDING_PAYMENT:
+        raise HTTPException(status_code=409, detail=f"Order is already in state: {order.status}")
 
     # 2. Generar IDs únicos para la simulación
     payment_id = f"pay_{current_user.id}_{order.id}"
     event_id = f"evt_{current_user.id}_{order.id}_success"
 
-    # 3. SIMULACIÓN DE LA PASARELA EXTERNA:
-    # En un entorno real, aquí harías un request HTTP con `httpx` a la pasarela real
-    # (ej. Stripe). Como es simulada, nosotros mismos podemos disparar el Webhook
-    # de forma automática (o dejar que un botón en tu frontend lo haga).
+    # 3. Persistir o actualizar el registro de pago en PaymentsTable
+    payment_repo = PaymentRepository(db)
+    existing_payment = payment_repo.get_payment_by_order_id(order_id=order.id)
+    if not existing_payment:
+        new_payment = PaymentsTable(
+            order_id=order.id,
+            payment_id=payment_id,
+            amount=order.total_amount,
+            status=PaymentStatus.PENDING,
+            created_at=datetime.now(UTC),
+            updated_at=datetime.now(UTC),
+        )
+        payment_repo.create_payment(new_payment)
+    else:
+        payment_id = existing_payment.payment_id
 
-    # Para esta demo, simularemos que la pasarela externa responde al instante
-    # llamando a nuestro propio webhook de éxito:
+    db.commit()
 
+    # 4. SIMULACIÓN DE LA PASARELA EXTERNA
     webhook_payload = {
         "event_id": event_id,
         "payment_id": payment_id,
         "order_id": order.id,
-        "status": "succeeded",  # Puedes cambiar a "failed" para probar errores
+        "status": "succeeded",
     }
+
+    # Calcular firma HMAC para conveniencia del llamador/tests
+    payload_raw = json.dumps(webhook_payload, separators=(",", ":")).encode("utf-8")
+    signature = hmac.new(
+        settings.WEBHOOK_SECRET.encode("utf-8"),
+        msg=payload_raw,
+        digestmod=hashlib.sha256,
+    ).hexdigest()
 
     return {
         "message": "Payment initiated successfully via mock gateway",
         "payment_id": payment_id,
         "checkout_url": f"https://mock-gateway.nexusmarket.internal/pay/{payment_id}",
         "simulated_webhook_payload_to_send": webhook_payload,
+        "simulated_webhook_signature": signature,
     }

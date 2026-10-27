@@ -8,7 +8,7 @@ from app.core.exceptions import (
     NotFoundException,
 )
 from app.core.logging import logger
-from app.models.models import InventoryItemsTable, OrdersStatus
+from app.models.models import InventoryItemsTable, OrdersStatus, PaymentStatus
 from app.repositories.order_repository import OrderRepository
 from app.repositories.payment_repository import PaymentRepository
 from app.repositories.skin_repository import SkinsRepository
@@ -55,10 +55,32 @@ class PaymentService:
                 message=f"Order is already in state: {order.status}"
             )
 
-        # 3. PROCESAR SEGÚN EL ESTADO DEL PAGO
+        # Validar si la orden ha expirado
+        now = datetime.now(UTC)
+        if order.expires_at:
+            order_expires_at = order.expires_at
+            if order_expires_at.tzinfo is None:
+                order_expires_at = order_expires_at.replace(tzinfo=UTC)
+            if now > order_expires_at:
+                order.status = OrdersStatus.CANCELLED
+                order.updated_at = now
+                raise BadRequestException(message="Order has expired")
+
+        # 3. VALIDAR IDENTIFICADOR DE PAGO
+        payment = self.payment_repo.get_payment_by_payment_id(payment_id=payment_id)
+        if payment and payment.order_id != order.id:
+            raise BadRequestException(
+                message=f"Payment ID {payment_id} does not belong to order {order_id}"
+            )
+
+        # 4. PROCESAR SEGÚN EL ESTADO DEL PAGO
         if status == "succeeded":
             order.status = OrdersStatus.PAYMENT_CONFIRMED
-            order.updated_at = datetime.now(UTC)
+            order.updated_at = now
+
+            if payment:
+                payment.status = PaymentStatus.SUCCEEDED
+                payment.updated_at = now
 
             # Actualizar stock (quitar de reservado, sumar a vendido) y entregar al inventario
             for item in order.items:
@@ -73,13 +95,17 @@ class PaymentService:
                             user_id=order.user_id,
                             skin_id=skin.id,
                             order_id=order.id,
-                            acquired_at=datetime.now(UTC),
+                            acquired_at=now,
                         )
                         self.db.add(inventory_item)
 
         elif status == "failed":
             order.status = OrdersStatus.PAYMENT_FAILED
-            order.updated_at = datetime.now(UTC)
+            order.updated_at = now
+
+            if payment:
+                payment.status = PaymentStatus.FAILED
+                payment.updated_at = now
 
             # Liberar stock reservado (rollback de stock)
             for item in order.items:
@@ -96,7 +122,7 @@ class PaymentService:
                 )
                 if skin:
                     skin.stock_reserved = max(0, skin.stock_reserved - item.quantity)
-                    skin.updated_at = datetime.now(UTC)
+                    skin.updated_at = now
 
         else:
             raise BadRequestException(f"Unknown payment status: {status}")

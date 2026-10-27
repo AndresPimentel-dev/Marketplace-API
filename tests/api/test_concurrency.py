@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime
 from unittest.mock import patch
 
@@ -12,8 +13,8 @@ from app.models.models import (
 
 
 def test_concurrency_create_order_endpoint(get_db_test, cliente):
-    """agregamos los dos usuarios que competiran por agregar objetos
-    al carro y tambien la skin a competir"""
+    """agregamos los dos usuarios que competiran concurrentemente por comprar
+    la skin limitada para demostrar que SELECT FOR UPDATE evita el oversell"""
     user_1 = UsersTable(
         email="fakeemaildeuser1@gmail.com",
         hashed_password="asjdbjhasvdas",
@@ -59,15 +60,25 @@ def test_concurrency_create_order_endpoint(get_db_test, cliente):
         json={"skin_id": skin.id, "quantity": 5},
         headers={"Authorization": f"Bearer {token_user_2}"},
     )
-    with patch("app.services.order_service.expire_stale_reservations.apply_async"):
-        response_user_1 = cliente.post(
-            "/api/v5.0/orders", headers={"Authorization": f"Bearer {token_user_1}"}
-        )
-        response_user_2 = cliente.post(
-            "/api/v5.0/orders", headers={"Authorization": f"Bearer {token_user_2}"}
+
+    def post_order(token):
+        return cliente.post(
+            "/api/v5.0/orders", headers={"Authorization": f"Bearer {token}"}
         )
 
-    assert response_user_1.status_code == 201
-    assert response_user_1.json()["user_id"] == user_1.id
-    assert response_user_2.status_code == 400
-    assert response_user_2.json()["detail"] == "Insufficient stock for skin"
+    with patch("app.services.order_service.expire_stale_reservations.apply_async"):
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            future_1 = executor.submit(post_order, token_user_1)
+            future_2 = executor.submit(post_order, token_user_2)
+            response_1 = future_1.result()
+            response_2 = future_2.result()
+
+    statuses = [response_1.status_code, response_2.status_code]
+    assert 201 in statuses
+    assert 400 in statuses
+
+    success_resp = response_1 if response_1.status_code == 201 else response_2
+    fail_resp = response_2 if response_1.status_code == 201 else response_1
+
+    assert success_resp.json()["user_id"] in [user_1.id, user_2.id]
+    assert fail_resp.json()["detail"] == "Insufficient stock for skin"
