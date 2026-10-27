@@ -68,4 +68,4 @@ jobs:
                    --retry-delay 3 \
                    --retry-connrefused \
                    --fail \
-                   https://localhost/
+                   https://localhost/health
