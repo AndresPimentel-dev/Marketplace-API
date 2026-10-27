@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 
 from app.core.logging import logger
 from app.db.session import SessionLocal
@@ -10,11 +10,11 @@ from app.worker.celery_app import celery_app
 def expire_stale_reservations():
     """
     Busca órdenes pendientes que ya superaron su tiempo límite,
-    libera el stock reservado y marca la orden como EXPIRED.
+    libera el stock reservado y marca la orden como CANCELLED o EXPIRED.
     """
     db = SessionLocal()
     try:
-        now = datetime.now
+        now = datetime.now(UTC)
 
         # 1. Buscar órdenes vencidas en estado PENDING_PAYMENT
         stale_orders = (
@@ -30,17 +30,19 @@ def expire_stale_reservations():
             return "No stale reservations found."
 
         for order in stale_orders:
-            # 2. Cambiar estado de la orden a EXPIRED
-            order.status = OrdersStatus.EXPIRED
+            # 2. Cambiar estado de la orden a CANCELLED
+            order.status = OrdersStatus.CANCELLED
+            order.updated_at = now
 
             # 3. Devolver el stock reservado a las skins
             for item in order.items:
                 skin = (
                     db.query(SkinsTable).filter(SkinsTable.id == item.skin_id).first()
                 )
-                if skin and skin.is_limited:
-                    # Liberamos el stock reservado
-                    skin.stock_reserved -= item.quantity
+                if skin:
+                    # Liberamos el stock reservado evitando valores negativos
+                    skin.stock_reserved = max(0, skin.stock_reserved - item.quantity)
+                    skin.updated_at = now
 
             logger.info(
                 "Stock reservation expired",
@@ -58,7 +60,7 @@ def expire_stale_reservations():
 
     except Exception as e:
         db.rollback()
-        logger.error("Error expiring reservations", extra=str(e))
+        logger.error(f"Error expiring reservations: {e}")
         raise
     finally:
-        db.close()  # Importante cerrar la sesión de base de datos del worker
+        db.close()

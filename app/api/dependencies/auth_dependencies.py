@@ -30,7 +30,7 @@ def get_current_user(
 
     user = user_repo.get_user_by_email(data["email"])
 
-    if user is None:
+    if user is None or not user.is_active:
         raise UnauthorizedException(message="unauthenticated")
 
     return user

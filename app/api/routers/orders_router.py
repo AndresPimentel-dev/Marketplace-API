@@ -32,7 +32,7 @@ def get_orders_route(
     orders = order_service.get_user_orders(
         user_id=current_user.id, page=page, page_size=page_size
     )
-    return OrderListResponse.construct(orders)
+    return OrderListResponse.model_validate({"orders": orders})
 
 
 @router.get("/orders/{order_id}", status_code=200, response_model=OrderResponse)

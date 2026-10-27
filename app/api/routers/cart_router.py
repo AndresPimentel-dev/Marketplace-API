@@ -58,4 +58,4 @@ def empty_cart(
     current_user: UsersTable = Depends(get_current_user),  # noqa: B008
 ) -> None:
 
-    return cart_service.empy_cart(user_id=current_user.id)
+    return cart_service.empty_cart(user_id=current_user.id)

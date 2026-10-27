@@ -31,7 +31,7 @@ class OrderResponse(BaseModel):
     user_id: int = Field(description="User ID")
     status: OrdersStatus = Field(description="current order state")
     total_amount: float = Field(description="total order price")
-    currency: SkinCurrency = Field(description="currency of thge order")
+    currency: SkinCurrency = Field(description="currency of the order")
     expires_at: datetime
     items: list[OrderItemResponse] = Field(description="list of items")
 
@@ -40,6 +40,8 @@ class OrderResponse(BaseModel):
 
 class OrderListResponse(BaseModel):
     orders: list[OrderResponse]
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class PaymentCreateRequest(BaseModel):

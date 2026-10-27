@@ -52,10 +52,7 @@ class PaymentService:
 
         if order.status != OrdersStatus.PENDING_PAYMENT:
             raise BadRequestException(
-                message={
-                    "status": "ignored",
-                    "message": f"Order is already in state: {order.status}",
-                }
+                message=f"Order is already in state: {order.status}"
             )
 
         # 3. PROCESAR SEGÚN EL ESTADO DEL PAGO
@@ -98,7 +95,8 @@ class PaymentService:
                     },
                 )
                 if skin:
-                    skin.stock_reserved -= item.quantity
+                    skin.stock_reserved = max(0, skin.stock_reserved - item.quantity)
+                    skin.updated_at = datetime.now(UTC)
 
         else:
             raise BadRequestException(f"Unknown payment status: {status}")

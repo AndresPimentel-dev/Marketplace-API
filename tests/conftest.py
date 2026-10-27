@@ -18,7 +18,7 @@ from sqlalchemy.orm import sessionmaker
 
 from app.core.config import settings
 from app.core.security import create_access_token
-from app.db.session import get_db
+from app.db.session import Base, get_db
 from app.main import app
 from app.models.models import (
     OrdersStatus,
@@ -37,16 +37,22 @@ SessionTesting = sessionmaker(autoflush=False, autocommit=False, bind=engine)
 
 @pytest.fixture(autouse=True)
 def create_tables():
-    # usamos ahora las migraciones de alembic en la base de datos postgres de pruebas
     alembic_cfg = Config("alembic.ini")
     engine = create_engine(url=DB_URL)
 
     with engine.connect() as connection:
-        connection.execute(text("DROP SCHEMA public CASCADE; CREATE SCHEMA public;"))
-        connection.commit()
+        if engine.dialect.name == "postgresql":
+            connection.execute(text("DROP SCHEMA public CASCADE; CREATE SCHEMA public;"))
+            connection.commit()
+        else:
+            Base.metadata.drop_all(bind=connection)
+            connection.commit()
     engine.dispose()
 
-    command.upgrade(alembic_cfg, "head")
+    if engine.dialect.name == "postgresql":
+        command.upgrade(alembic_cfg, "head")
+    else:
+        Base.metadata.create_all(bind=create_engine(url=DB_URL))
 
     yield
 

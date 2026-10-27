@@ -11,6 +11,7 @@ class SkinRarity(str, Enum):
 
 class SkinCategory(str, Enum):
     WEAPON = "weapon"
+    CHARACTER = "character"
     CHARACTHER = "character"
     EMOTE = "emote"
     BANNER = "banner"
@@ -18,10 +19,10 @@ class SkinCategory(str, Enum):
 
 
 class SkinCurrency(str, Enum):
-    COLOMBIN_PESOS = "COP"
+    COLOMBIAN_PESOS = "COP"
     DOLLARS = "USD"
     EUROS = "EUR"
-    AUS_DOLLAR = "AUSD"
+    AUS_DOLLAR = "AUD"
     YEN = "YEN"
 
 
@@ -31,9 +32,9 @@ class UserRole(str, Enum):
 
 
 class OrderStatus(str, Enum):
-    PENDING_PAYMENT = "PEDING_PAYMENT"
-    PAYMENT_CONFIRMED = "PAYMET_CONFIRMED"
-    PAYMENT_FAILED = "PAYMENT_FAILED"
-    CANCELLED = "CANCELLED"
-    EXPIRED = "EXPIRED"
-    COMPLETED = "COMPLETED"
+    PENDING_PAYMENT = "pending_payment"
+    PAYMENT_CONFIRMED = "payment_confirmed"
+    PAYMENT_FAILED = "payment_failed"
+    CANCELLED = "cancelled"
+    EXPIRED = "expired"
+    COMPLETED = "completed"

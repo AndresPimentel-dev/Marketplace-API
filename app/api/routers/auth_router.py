@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response
 from fastapi.security import OAuth2PasswordRequestForm
 
 from app.api.dependencies.auth_dependencies import get_auth_service, get_current_user
@@ -66,5 +66,4 @@ def get_loged_user(
 def logout_user(
     current_user: UsersTable = Depends(get_current_user),  # noqa: B008
 ):
-
-    return {"message": "Successfully logged out"}
+    return Response(status_code=204)

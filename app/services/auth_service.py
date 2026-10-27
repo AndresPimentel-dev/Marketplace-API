@@ -44,11 +44,11 @@ class AuthService:
 
     def refresh_token(self, refresh_token: str) -> TokenResponse:
         data = decode_token(token=refresh_token)
-        if data is None:
+        if data is None or data.get("token_type") != "refresh":
             raise UnauthorizedException(message="unauthorized")
         email = data["email"]
         user = self.user_repository.get_user_by_email(email=email)
-        if user is None:
+        if user is None or not user.is_active:
             raise UnauthorizedException(message="unauthorized")
         new_access_token = create_access_token(data={"sub": user.email})
         return TokenResponse(

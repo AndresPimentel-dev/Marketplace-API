@@ -8,3 +8,4 @@ venv/
 __pycache__/
 .ruff_cache/
 .pytest_cache/
+mi_db_prueba.db

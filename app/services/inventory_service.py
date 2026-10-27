@@ -23,8 +23,8 @@ class InventoryService:
 
     def get_inventory_item(self, inventory_item_id: int, user_id: int):
         item = self.inventory_repo.get_by_id(inventory_item_id, user_id)
-        if not item:
-            raise NotFoundException(message="El item de inventario no existe.")
+        if not item or item.user_id != user_id:
+            raise NotFoundException(message="Item not found")
         return item
 
     def deliver_skin(self, user_id: int, skin_id: int, order_id: int):

@@ -26,7 +26,7 @@ class OrderRepository:
         return self.db.scalars(statement=stmt).all()
 
     def update_order_status(
-        self, order: OrdersTable, new_status: OrderStatus
+        self, order: OrdersTable, new_status: OrderStatus | str
     ) -> OrdersTable:
         order.status = new_status
         order.updated_at = datetime.now(UTC)

@@ -12,7 +12,7 @@ ALGORITHM = "HS256"
 ACCESS_TOKENS_EXPIRE_MINUTES = 15
 
 
-##Funciones de hashin
+## Funciones de hashing
 def hash_password(password: str) -> str:
     return password_hash_context.hash(password)
 
@@ -21,7 +21,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return password_hash_context.verify(plain_password, hashed_password)
 
 
-##Dunsiones de tokens
+## Funciones de tokens
 
 
 def create_access_token(data: dict) -> str:

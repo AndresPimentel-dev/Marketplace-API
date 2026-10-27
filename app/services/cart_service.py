@@ -83,7 +83,7 @@ class CartService:
         cart.updated_at = datetime.now(UTC)
         self.db.commit()
 
-    def empy_cart(self, user_id: int) -> CartsTable | None:
+    def empty_cart(self, user_id: int) -> CartsTable | None:
         cart = self.cart_repo.get_cart_by_user_id(user_id=user_id)
         if cart is None:
             raise NotFoundException(message="Cart not found")
@@ -91,3 +91,6 @@ class CartService:
         to_delete = self.cart_repo.delete_all_items(cart=cart)
         self.db.commit()
         return to_delete
+
+    # Alias for backward compatibility
+    empy_cart = empty_cart

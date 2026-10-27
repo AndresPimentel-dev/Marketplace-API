@@ -6,7 +6,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from app.core.security import hash_password
 from app.db.session import SessionLocal
-from app.models.models import UsersTable
+from app.models.models import UserRole, UsersTable
 
 load_dotenv()
 
@@ -19,22 +19,26 @@ def create_admin():
     try:
         existing = db.query(UsersTable).filter(UsersTable.email == ADMIN_EMAIL).first()
         if existing:
-            return print("admin already created")
+            print("admin already created")
+            return existing
         hashed = hash_password(password=ADMIN_PASSWORD)
         new = UsersTable(
             email=ADMIN_EMAIL,
             hashed_password=hashed,
-            role="admin",
+            role=UserRole.ADMIN,
             is_active=True,
             created_at=datetime.now(UTC),
         )
         db.add(new)
         db.commit()
-        print(new)
+        db.refresh(new)
+        print("admin successfully created")
         return new
     except SQLAlchemyError as e:
         db.rollback()
         print(f"error creating admin: {e}")
+    finally:
+        db.close()
 
 
 if __name__ == "__main__":

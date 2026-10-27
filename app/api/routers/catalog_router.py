@@ -23,7 +23,7 @@ def get_skins(
     is_limited: bool | None = None,
     # validamos el page y el page size
     page: int = Query(1, ge=1, description="Numero de pagina minimo 1"),
-    page_size: int = Query(10, ge=1, le=50, description="Elemntos por pagina"),
+    page_size: int = Query(10, ge=1, le=50, description="Elementos por pagina"),
 ) -> SkinListResponse:
 
     skins = catalog_service.get_skins(
