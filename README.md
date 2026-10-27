@@ -1,1351 +1,429 @@
-# 🎮 Nexus Market
-
-### A backend for a limited digital gaming cosmetics marketplace
+# 🎮 Nexus Market — High-Concurrency Gaming Cosmetics Marketplace API
 
 [![Python](https://img.shields.io/badge/Python-3.12+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-API-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-4169E1?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
-[![Docker](https://img.shields.io/badge/Docker-Containerization-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
-[![Alembic](https://img.shields.io/badge/Alembic-Migrations-6BA81E?logo=alembic&logoColor=white)](https://alembic.sqlalchemy.org/)
-[![Prometheus](https://img.shields.io/badge/Prometheus-Monitoring-E6522C?logo=prometheus&logoColor=white)](https://prometheus.io/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-4169E1?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-2.0+-D71F00?logo=sqlalchemy&logoColor=white)](https://www.sqlalchemy.org/)
+[![Celery](https://img.shields.io/badge/Celery-5.4+-37814A?logo=celery&logoColor=white)](https://docs.celeryq.dev/)
+[![Redis](https://img.shields.io/badge/Redis-7-DC382D?logo=redis&logoColor=white)](https://redis.io/)
+[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
+[![Prometheus](https://img.shields.io/badge/Prometheus-Metrics-E6522C?logo=prometheus&logoColor=white)](https://prometheus.io/)
 [![Grafana](https://img.shields.io/badge/Grafana-Dashboards-F46800?logo=grafana&logoColor=white)](https://grafana.com/)
-[![Loki](https://img.shields.io/badge/Grafana_Loki-Logging-F46800?logo=grafana&logoColor=white)](https://grafana.com/oss/loki/)
-[![JWT Auth](https://img.shields.io/badge/JWT-Authentication-000000?logo=jsonwebtokens&logoColor=white)](https://jwt.io/)
-[![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-CI-2088FF?logo=githubactions&logoColor=white)](https://github.com/features/actions)
-[![Celery](https://img.shields.io/badge/Celery-Task_Queue-37814A?logo=celery&logoColor=white)](https://docs.celeryq.dev/)
-[![Redis](https://img.shields.io/badge/Redis-Message_Broker-DC382D?logo=redis&logoColor=white)](https://redis.io/)
+[![Loki](https://img.shields.io/badge/Grafana_Loki-Structured_Logs-F46800?logo=grafana&logoColor=white)](https://grafana.com/oss/loki/)
 
-**Nexus Market** is a backend project for a fictional gaming cosmetics marketplace where players can browse, purchase, and manage digital items such as weapon skins, character cosmetics, emotes, and collectibles.
+**Nexus Market** es una API backend RESTful de alto rendimiento diseñada para una tienda digital de cosméticos de videojuegos (*skins*, coleccionables, estandartes y armas). 
 
-The project focuses on backend engineering fundamentals that become important beyond basic CRUD applications: transactional consistency, concurrent inventory reservations, secure authentication, asynchronous payment processing, automated testing, and operational observability.
-
-> **Project status:** In development. This README describes the intended system and its technical goals. Features, infrastructure, and test results should be marked as implemented only after they have been built and verified.
+El proyecto resuelve los desafíos críticos de ingeniería de backend que surgen más allá del CRUD convencional: **control de concurrencia y prevención de sobreventa (*overselling*) en lanzamientos limitados**, **reservas transaccionales de inventario con expiración asíncrona**, **webhooks de pagos idempotentes y verificados criptográficamente (HMAC-SHA256)** y un **stack integral de observabilidad en tiempo real**.
 
 ---
 
-## Features
-
-- Concurrency
-- Observability
-- User registration and authentication
-- JWT authentication
-- Ecomerce Service
-- Products Management
-- PostgreSQL
-- Database migrations
-- Automated tests
-- Docker
-
-## 🎯 Overview
-
-Nexus Market simulates the backend of a digital storefront for a fictional game called **Nexus Rift**.
-
-Users can explore a catalog of digital cosmetics, add items to their carts, place orders, and receive purchased items in their digital inventories.
-
-The main engineering challenge is handling limited-edition items during high-demand releases, also known as *limited drops*.
-
-For example, if a skin has only 10 units available and 100 users attempt to purchase it simultaneously, the system must ensure that no more than 10 units are reserved or sold.
-
-This requires more than endpoint validation. It requires correct database transactions, concurrency control, inventory invariants, and carefully managed order and payment states.
-
-The project also explores asynchronous workflows and observability, keeping the architecture within the scope of a maintainable backend application rather than introducing unnecessary microservices.
-
-### Project goals
-
-- Design a REST API with clearly separated responsibilities.
-- Implement authentication and resource-level authorization.
-- Model a commerce workflow using PostgreSQL and SQLAlchemy.
-- Prevent overselling during concurrent purchases.
-- Handle simulated payment notifications safely and idempotently.
-- Execute background tasks using Celery and Redis.
-- Test business logic, API behavior, database integration, and concurrency.
-- Containerize the application and its supporting services.
-- Expose useful metrics and structured logs for troubleshooting.
-
-## ✨ Core Features
-
-The following table describes the intended feature set. Update each status as implementation progresses.
-
-| Feature | Description | Status |
-|---|---|---|
-| Authentication | User registration, login, JWT access and refresh tokens | Planned |
-| Authorization | User and administrator roles | Planned |
-| Cosmetics catalog | Browse, search, filter, and paginate items | Planned |
-| Shopping cart | Add, update, and remove items | Planned |
-| Orders | Create orders and preserve purchase-time prices | Planned |
-| Limited drops | Manage limited stock and temporary reservations | Planned |
-| Concurrency control | Prevent inventory overselling | Planned |
-| Simulated payments | Process successful and failed payment outcomes | Planned |
-| Payment webhooks | Verify and process events idempotently | Planned |
-| Digital inventory | Deliver purchased items to user accounts | Planned |
-| Background jobs | Execute asynchronous tasks with Celery | Planned |
-| Database migrations | Manage schema changes with Alembic | Planned |
-| Automated tests | Unit, API, integration, and concurrency tests | Planned |
-| Containerization | Run application dependencies through Docker Compose | Planned |
-| Observability | Metrics, dashboards, and centralized logs | Planned |
-| CI pipeline | Automate code checks, tests, and image builds | Planned |
-
-## 🛠️ Tech Stack
-
-The intended technology stack is selected to address specific engineering problems.
-
-| Technology | Purpose |
-|---|---|
-| Python | Main programming language |
-| FastAPI | REST API and request validation |
-| SQLAlchemy | Database access and ORM |
-| PostgreSQL | Persistent storage and transactional consistency |
-| Alembic | Database schema migrations |
-| Redis | Celery message broker and optional caching |
-| Celery | Asynchronous background processing |
-| Pytest | Automated testing |
-| Docker | Application and dependency containerization |
-| Docker Compose | Local multi-service environment |
-| GitHub Actions | Continuous integration |
-| Prometheus | Metrics collection |
-| Grafana | Metrics visualization and dashboards |
-| Loki | Log aggregation and querying |
-
-The architecture uses PostgreSQL as the source of truth for orders, payments, and inventory. Redis is not intended to replace the relational database or serve as the authoritative record of purchases.
-
-## 🏗️ Architecture
-
-Nexus Market is designed as a modular backend application with a separate worker process for background tasks.
-
-```mermaid
-flowchart TD
-    Client[Client]
-    API[FastAPI Application]
-    Services[Business Services]
-    DB[(PostgreSQL)]
-    Redis[(Redis)]
-    Worker[Celery Worker]
-    Prom[Prometheus]
-    Loki[Loki]
-    Grafana[Grafana]
-
-    Client --> API
-    API --> Services
-    Services --> DB
-    API --> Redis
-    Redis --> Worker
-    Worker --> DB
-    API --> Prom
-    Worker --> Loki
-    Prom --> Grafana
-    Loki --> Grafana
-```
-
-The diagram represents the intended architecture. The exact metrics and logging collection paths will depend on the final configuration.
-
-### Main components
-
-**API layer**
-
-Responsible for HTTP routing, request validation, authentication dependencies, response schemas, and error handling.
-
-**Service layer**
-
-Contains business rules such as order creation, stock reservation, payment transitions, and inventory delivery.
-
-**Repository and database layer**
-
-Handles persistence through SQLAlchemy and PostgreSQL, including transactions, constraints, and concurrency control.
-
-**Background worker**
-
-Processes tasks that do not need to block the original HTTP request, such as reservation expiration and payment-related processing.
-
-**Observability stack**
-
-Collects application metrics and logs to help inspect request behavior, failed operations, task execution, and system performance.
-
-The goal is to maintain clear boundaries without splitting the application into multiple independently deployed business services prematurely.
-
-## 🛒 Purchase Workflow
-
-A typical purchase follows this lifecycle:
-
-```mermaid
-flowchart TD
-    A[Browse Catalog] --> B[Add Items to Cart]
-    B --> C[Submit Checkout]
-    C --> D{Validate Stock}
-    D -->|Unavailable| E[Reject Checkout]
-    D -->|Available| F[Create Order and Reservations]
-    F --> G[Pending Payment]
-    G --> H[Simulated Payment Provider]
-    H --> I{Payment Result}
-    I -->|Success| J[Confirm Payment]
-    J --> K[Commit Inventory Delivery]
-    K --> L[Completed Order]
-    I -->|Failure| M[Release Reservations]
-    M --> N[Cancel Order]
-```
-
-The checkout process is intended to:
-
-1. Authenticate the user and load their cart.
-2. Validate the requested items and quantities.
-3. Start a database transaction.
-4. Lock the relevant inventory records or use an equivalent atomic concurrency-control strategy.
-5. Verify that sufficient stock remains available.
-6. Create the order, order items, and stock reservations.
-7. Preserve the purchase-time price of each item.
-8. Clear the cart only when checkout succeeds.
-9. Commit the transaction.
-10. Initiate the simulated payment workflow.
-11. Complete the order and deliver the items after successful payment.
-
-If any required stock reservation fails, the checkout must not leave behind a partially reserved cart.
-
-## 🔒 Inventory and Concurrency
-
-Concurrency control is one of the central engineering goals of Nexus Market.
-
-Consider a limited drop with the following inventory:
-
-- Total stock: 10 units
-- Available stock: 10 units
-- Concurrent purchase attempts: 100
-
-The expected behavior is that no more than 10 units can be successfully reserved. The remaining requests must be rejected or handled according to the application's inventory policy.
-
-### Inventory invariant
-
-The system must preserve:
-
-```text
-stock_sold + stock_reserved <= stock_total
-```
-
-Available stock is calculated as:
-
-```text
-available_stock = stock_total - stock_sold - stock_reserved
-```
-
-### Intended approach
-
-The implementation will use PostgreSQL transactions and appropriate concurrency controls to prevent competing requests from reserving the same units.
-
-Depending on the operation, this may involve row-level locking with `SELECT ... FOR UPDATE`, atomic conditional updates, or a combination of database constraints and transaction logic.
-
-The essential requirement is that checking availability and reserving stock cannot be separated into an unsafe read-then-write sequence.
-
-### Reservation lifecycle
-
-A reservation temporarily holds inventory while a payment is pending.
-
-- **Created:** available stock decreases.
-- **Confirmed:** reserved stock is converted into sold stock.
-- **Failed or expired:** the reservation is released and the stock becomes available again.
-
-Reservations are intended to expire after a configurable period, such as 10 minutes.
-
-The final implementation must ensure that payment confirmation and reservation expiration cannot both successfully finalize conflicting outcomes.
-
-### Concurrency test objective
-
-A key acceptance test will submit 100 concurrent purchase attempts against 10 available units.
-
-Expected result:
-
-- Successful reservations: 10
-- Rejected attempts due to unavailable stock: 90
-- Oversold inventory: 0
-
-These are target results, not a claim that the test has already passed. Actual results should be documented after running the test against the real database configuration.
-
-## 📦 Orders and Payments
-
-### Order lifecycle
-
-Orders will follow explicit state transitions rather than allowing arbitrary status changes.
-
-| State | Meaning |
-|---|---|
-| `PENDING_PAYMENT` | The order has been created and awaits payment |
-| `PAYMENT_CONFIRMED` | The payment has been confirmed |
-| `PAYMENT_FAILED` | The payment attempt has failed |
-| `CANCELLED` | The order has been cancelled |
-| `EXPIRED` | The payment or reservation deadline has expired |
-| `COMPLETED` | The purchase has been finalized and the inventory delivered |
-
-Only valid transitions will be permitted. For example, a completed order must not return to `PENDING_PAYMENT`.
-
-The implementation should define the exact transitions and their transactional effects in one clearly identifiable part of the business logic.
-
-### Price snapshots
-
-Each order item will store the unit price applied when the order was created.
-
-This prevents historical orders from changing when catalog prices are updated.
-
-For example, if an item was purchased for `$9.99` and its catalog price later increases to `$19.99`, the existing order must retain the original `$9.99` unit price.
-
-### Simulated payment provider
-
-The project will use a mock payment provider instead of processing real money.
-
-The simulated provider will support successful and failed payment outcomes and notify the application through a webhook endpoint.
-
-This allows the backend to demonstrate payment-related state transitions without requiring live payment credentials or real financial transactions.
-
-### Webhook idempotency
-
-Webhook providers may deliver the same event more than once because of retries or network failures.
-
-Nexus Market is designed to record processed webhook event identifiers and ensure that duplicate events do not deliver the same items repeatedly or finalize the same purchase twice.
-
-The intended processing flow is:
-
-1. Receive the webhook.
-2. Verify its signature.
-3. Validate the event and its associated payment.
-4. Detect whether the event has already been processed.
-5. Apply the appropriate state transition transactionally.
-6. Record the processed event.
-7. Return an appropriate response.
-
-The event record and business changes must be committed consistently. Concurrent deliveries of the same event must also be handled safely.
-
-## 🔐 Authentication and Security
-
-The intended security model includes:
-
-- Password hashing instead of storing plaintext passwords.
-- JWT access tokens and refresh tokens.
-- User and administrator roles.
-- Protected endpoints for personal orders and inventory.
-- Ownership checks when accessing individual resources.
-- Request validation for identifiers, quantities, prices, and state transitions.
-- Webhook signature verification.
-- Environment-based configuration for secrets.
-- Consistent error responses without exposing sensitive internal details.
-
-Authentication alone is not sufficient for authorization. For example, a user must not be able to access another user's order simply by changing the order ID in the request.
-
-Administrator-only operations will manage catalog items, stock, and limited drops.
-
-Payment signatures, passwords, access tokens, and other secrets must never be written to application logs.
-
-## 🗄️ Database Design
-
-The planned relational model includes the following entities:
-
-| Entity | Responsibility |
-|---|---|
-| `users` | User accounts, password hashes, and roles |
-| `skins` | Catalog items, prices, rarity, and stock information |
-| `carts` | Shopping carts associated with users |
-| `cart_items` | Items and quantities in each cart |
-| `orders` | Order ownership, status, total, and expiration |
-| `order_items` | Purchased items, quantities, and price snapshots |
-| `payments` | Payment identifiers, amounts, and statuses |
-| `reservations` | Temporarily reserved inventory |
-| `inventory_items` | Digital items acquired by users |
-| `processed_webhook_events` | Webhook event identifiers used for deduplication |
-
-The exact schema, indexes, foreign keys, unique constraints, and transaction boundaries will be documented alongside the implementation.
-
-### Data integrity considerations
-
-- Order items reference their parent orders.
-- Prices and totals are validated and represented using appropriate decimal types rather than floating-point arithmetic.
-- Historical purchase prices are stored independently of current catalog prices.
-- Database constraints protect critical relationships and uniqueness requirements.
-- Stock changes occur within controlled transactions.
-- Alembic migrations manage schema evolution.
-
-PostgreSQL is the authoritative store for the commerce workflow.
-
-## ⚙️ Background Processing
-
-Celery and Redis will support work that should not unnecessarily block HTTP requests.
-
-Planned tasks include:
-
-- Processing simulated payment operations.
-- Expiring outstanding reservations.
-- Sending purchase confirmation notifications.
-- Reconciling pending orders.
-
-Background tasks must account for retries and potential duplicate execution. A retry must not cause duplicate inventory delivery or an invalid order transition.
-
-Celery is used where asynchronous processing provides a practical benefit, not as a replacement for ordinary synchronous business logic.
-
-## 📊 Observability
-
-The project aims to provide useful operational visibility rather than simply including monitoring tools in the technology stack.
-
-### Prometheus
-
-Planned application metrics include:
-
-- HTTP request counts and latency.
-- HTTP error rates.
-- Orders created and completed.
-- Successful and failed payments.
-- Stock reservation failures.
-- Background task outcomes and execution duration.
-
-Metric names and labels will be finalized during implementation. Labels should avoid unbounded values such as individual user IDs or order IDs.
-
-### Grafana
-
-The planned dashboard will organize metrics into three areas:
-
-**API performance**
-- Request volume
-- Latency
-- Error rates
-
-**Commerce**
-- Order outcomes
-- Payment outcomes
-- Reservation failures
-
-**Background processing**
-- Task success and failure counts
-- Task execution duration
-
-### Loki and structured logging
-
-Application logs should use structured fields to make related events easier to investigate.
-
-Examples of useful events include:
-
-- `order.created`
-- `payment.completed`
-- `payment.failed`
-- `stock.reserved`
-- `stock.reservation_failed`# 🎮 Nexus Market
-
-### A backend for a limited digital gaming cosmetics marketplace
-
-[![Python](https://img.shields.io/badge/Python-3.12+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-API-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-4169E1?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
-[![Docker](https://img.shields.io/badge/Docker-Containerization-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
-
-**Nexus Market** is a backend project for a fictional gaming cosmetics marketplace where players can browse, purchase, and manage digital items such as weapon skins, character cosmetics, emotes, and collectibles.
-
-The project focuses on backend engineering fundamentals that become important beyond basic CRUD applications: transactional consistency, concurrent inventory reservations, secure authentication, asynchronous payment processing, automated testing, and operational observability.
-
-> **Project status:** In development. This README describes the intended system and its technical goals. Features, infrastructure, and test results should be marked as implemented only after they have been built and verified.
+## 📋 Tabla de Contenidos
+
+1. [Problema de Negocio y Desafíos Técnicos](#-problema-de-negocio-y-desafíos-técnicos)
+2. [Arquitectura del Sistema](#-arquitectura-del-sistema)
+3. [Decisiones Clave de Ingeniería](#-decisiones-clave-de-ingeniería)
+   - [Concurrencia e Invariante de Inventario](#1-concurrencia-e-invariante-de-inventario)
+   - [Ciclo de Vida de Órdenes y Pagos](#2-ciclo-de-vida-de-órdenes-y-pagos)
+   - [Seguridad Criptográfica en Webhooks](#3-seguridad-criptográfica-en-webhooks)
+   - [Workers Asíncronos para Expiración de Reservas](#4-workers-asíncronos-para-expiración-de-reservas)
+4. [Stack Tecnológico](#-stack-tecnológico)
+5. [Estructura del Proyecto](#-estructura-del-proyecto)
+6. [Catálogo de Endpoints de la API](#-catálogo-de-endpoints-de-la-api)
+7. [Observabilidad, Métricas y Logs](#-observabilidad-métricas-y-logs)
+8. [Puesta en Marcha con Docker Compose](#-puesta-en-marcha-con-docker-compose)
+9. [Configuración Local y Desarrollo](#-configuración-local-y-desarrollo)
+10. [Estrategia de Pruebas Automatizadas](#-estrategia-de-pruebas-automatizadas)
+11. [Autor](#-autor)
 
 ---
 
+## 🎯 Problema de Negocio y Desafíos Técnicos
 
-## 🎯 Overview
+Durante un *limited drop* (lanzamiento de cosméticos exclusivos de edición limitada), cientos o miles de usuarios intentan adquirir un stock finito (por ejemplo, 10 unidades) en el mismo segundo exacto.
 
-Nexus Market simulates the backend of a digital storefront for a fictional game called **Nexus Rift**.
+Un backend tradicional que ejecuta una secuencia ingenua de lectura y escritura (`SELECT stock` -> validar en Python -> `UPDATE stock`) sufre de **condiciones de carrera (*Race Conditions*)**, provocando sobreventa de productos (*overselling*), inconsistencia financiera y degradación del servicio.
 
-Users can explore a catalog of digital cosmetics, add items to their carts, place orders, and receive purchased items in their digital inventories.
+**Nexus Market resuelve esto mediante:**
+- **Bloqueo pesimista a nivel de fila (`SELECT ... FOR UPDATE`)**: Garantiza que transacciones simultáneas compitan en cola a nivel de PostgreSQL, serializando de forma segura la reserva de stock.
+- **Reservas transaccionales con TTL (Time-To-Live)**: El stock se aparta temporalmente (10 minutos) con un estado `pending_payment`. Si el usuario no paga, Celery + Redis liberan el stock automáticamente.
+- **Webhook de pagos con firma HMAC-SHA256 e Idempotencia**: La pasarela de pagos notifica el resultado mediante webhook firmado. Se protege la ruta contra falsificación de payloads y se garantiza idempotencia estricta para evitar entregas dobles de inventario frente a reintentos de red.
 
-The main engineering challenge is handling limited-edition items during high-demand releases, also known as *limited drops*.
+---
 
-For example, if a skin has only 10 units available and 100 users attempt to purchase it simultaneously, the system must ensure that no more than 10 units are reserved or sold.
+## 🏗️ Arquitectura del Sistema
 
-This requires more than endpoint validation. It requires correct database transactions, concurrency control, inventory invariants, and carefully managed order and payment states.
-
-The project also explores asynchronous workflows and observability, keeping the architecture within the scope of a maintainable backend application rather than introducing unnecessary microservices.
-
-### Project goals
-
-- Design a REST API with clearly separated responsibilities.
-- Implement authentication and resource-level authorization.
-- Model a commerce workflow using PostgreSQL and SQLAlchemy.
-- Prevent overselling during concurrent purchases.
-- Handle simulated payment notifications safely and idempotently.
-- Execute background tasks using Celery and Redis.
-- Test business logic, API behavior, database integration, and concurrency.
-- Containerize the application and its supporting services.
-- Expose useful metrics and structured logs for troubleshooting.
-
-## ✨ Core Features
-
-The following table describes the intended feature set. Update each status as implementation progresses.
-
-| Feature | Description | Status |
-|---|---|---|
-| Authentication | User registration, login, JWT access and refresh tokens | Planned |
-| Authorization | User and administrator roles | Planned |
-| Cosmetics catalog | Browse, search, filter, and paginate items | Planned |
-| Shopping cart | Add, update, and remove items | Planned |
-| Orders | Create orders and preserve purchase-time prices | Planned |
-| Limited drops | Manage limited stock and temporary reservations | Planned |
-| Concurrency control | Prevent inventory overselling | Planned |
-| Simulated payments | Process successful and failed payment outcomes | Planned |
-| Payment webhooks | Verify and process events idempotently | Planned |
-| Digital inventory | Deliver purchased items to user accounts | Planned |
-| Background jobs | Execute asynchronous tasks with Celery | Planned |
-| Database migrations | Manage schema changes with Alembic | Planned |
-| Automated tests | Unit, API, integration, and concurrency tests | Planned |
-| Containerization | Run application dependencies through Docker Compose | Planned |
-| Observability | Metrics, dashboards, and centralized logs | Planned |
-| CI pipeline | Automate code checks, tests, and image builds | Planned |
-
-## 🛠️ Tech Stack
-
-The intended technology stack is selected to address specific engineering problems.
-
-| Technology | Purpose |
-|---|---|
-| Python | Main programming language |
-| FastAPI | REST API and request validation |
-| SQLAlchemy | Database access and ORM |
-| PostgreSQL | Persistent storage and transactional consistency |
-| Alembic | Database schema migrations |
-| Redis | Celery message broker and optional caching |
-| Celery | Asynchronous background processing |
-| Pytest | Automated testing |
-| Docker | Application and dependency containerization |
-| Docker Compose | Local multi-service environment |
-| GitHub Actions | Continuous integration |
-| Prometheus | Metrics collection |
-| Grafana | Metrics visualization and dashboards |
-| Loki | Log aggregation and querying |
-
-The architecture uses PostgreSQL as the source of truth for orders, payments, and inventory. Redis is not intended to replace the relational database or serve as the authoritative record of purchases.
-
-## 🏗️ Architecture
-
-Nexus Market is designed as a modular backend application with a separate worker process for background tasks.
+El proyecto sigue una arquitectura en capas limpia (*Controller / Service / Repository / Database*) estructurada como un **Monolito Modular** altamente escalable:
 
 ```mermaid
 flowchart TD
-    Client[Client]
-    API[FastAPI Application]
-    Services[Business Services]
-    DB[(PostgreSQL)]
-    Redis[(Redis)]
-    Worker[Celery Worker]
-    Prom[Prometheus]
-    Loki[Loki]
-    Grafana[Grafana]
+    Client([Cliente / Frontend / Swagger])
+    Caddy[Caddy Reverse Proxy :80/:443]
+    FastAPI[FastAPI Application :8000]
+    
+    subgraph Core App
+        AuthRouter[Auth Router]
+        CatalogRouter[Catalog Router]
+        CartRouter[Cart Router]
+        OrderRouter[Orders & Checkout Router]
+        WebhookRouter[Payment Webhook Router]
+        Services[Service Layer: Order, Payment, Catalog, Cart]
+        Repos[Repositories: DB Transactions & Queries]
+    end
 
-    Client --> API
-    API --> Services
-    Services --> DB
-    API --> Redis
-    Redis --> Worker
-    Worker --> DB
-    API --> Prom
-    Worker --> Loki
-    Prom --> Grafana
+    subgraph Data Stores
+        PostgreSQL[(PostgreSQL 15)]
+        Redis[(Redis 7)]
+    end
+
+    subgraph Async Processing
+        CeleryWorker[Celery Background Worker]
+    end
+
+    subgraph Observability
+        Prometheus[Prometheus Scraper]
+        Loki[Grafana Loki]
+        Alloy[Grafana Alloy Log Collector]
+        Grafana[Grafana Dashboards :3000]
+    end
+
+    Client --> Caddy
+    Caddy --> FastAPI
+    FastAPI --> AuthRouter & CatalogRouter & CartRouter & OrderRouter & WebhookRouter
+    AuthRouter & CatalogRouter & CartRouter & OrderRouter & WebhookRouter --> Services
+    Services --> Repos
+    Repos -->|Row-level Lock / Atomic TX| PostgreSQL
+    Services -->|Dispatch Task Countdown 600s| Redis
+    Redis --> CeleryWorker
+    CeleryWorker -->|Expire Stale Reservations| PostgreSQL
+    
+    FastAPI -->|/metrics| Prometheus
+    Prometheus --> Grafana
+    FastAPI & CeleryWorker -->|Docker Logs| Alloy
+    Alloy --> Loki
     Loki --> Grafana
 ```
 
-The diagram represents the intended architecture. The exact metrics and logging collection paths will depend on the final configuration.
+---
 
-### Main components
+## 🔒 Decisiones Clave de Ingeniería
 
-**API layer**
+### 1. Concurrencia e Invariante de Inventario
 
-Responsible for HTTP routing, request validation, authentication dependencies, response schemas, and error handling.
+El stock de cada cosmético se modela con tres contadores explícitos:
+- `stock_total`: Cantidad máxima emitida.
+- `stock_reserved`: Cantidad apartada en órdenes pendientes de pago.
+- `stock_sold`: Cantidad efectivamente vendida y entregada.
 
-**Service layer**
+**Invariante matemático estricto:**
+$$\text{stock\_sold} + \text{stock\_reserved} \le \text{stock\_total}$$
+$$\text{available\_stock} = \text{stock\_total} - \text{stock\_sold} - \text{stock\_reserved}$$
 
-Contains business rules such as order creation, stock reservation, payment transitions, and inventory delivery.
+Para reservar stock sin condiciones de carrera, el repositorio adquiere un candado pesimista en la base de datos:
+```python
+# app/repositories/skin_repository.py
+def get_skin_with_lock(self, skin_id: int) -> SkinsTable | None:
+    stmt = select(SkinsTable).where(SkinsTable.id == skin_id).with_for_update()
+    return self.db.scalars(stmt).first()
+```
+Toda la operación (verificar disponibilidad, incrementar `stock_reserved`, crear ítems de orden y vaciar carrito) se ejecuta dentro de la misma transacción atómica de SQLAlchemy.
 
-**Repository and database layer**
+### 2. Ciclo de Vida de Órdenes y Pagos
 
-Handles persistence through SQLAlchemy and PostgreSQL, including transactions, constraints, and concurrency control.
-
-**Background worker**
-
-Processes tasks that do not need to block the original HTTP request, such as reservation expiration and payment-related processing.
-
-**Observability stack**
-
-Collects application metrics and logs to help inspect request behavior, failed operations, task execution, and system performance.
-
-The goal is to maintain clear boundaries without splitting the application into multiple independently deployed business services prematurely.
-
-## 🛒 Purchase Workflow
-
-A typical purchase follows this lifecycle:
+El flujo de compra se desglosa en 4 fases desacopladas y atómicas:
 
 ```mermaid
-flowchart TD
-    A[Browse Catalog] --> B[Add Items to Cart]
-    B --> C[Submit Checkout]
-    C --> D{Validate Stock}
-    D -->|Unavailable| E[Reject Checkout]
-    D -->|Available| F[Create Order and Reservations]
-    F --> G[Pending Payment]
-    G --> H[Simulated Payment Provider]
-    H --> I{Payment Result}
-    I -->|Success| J[Confirm Payment]
-    J --> K[Commit Inventory Delivery]
-    K --> L[Completed Order]
-    I -->|Failure| M[Release Reservations]
-    M --> N[Cancel Order]
+sequenceDiagram
+    autonumber
+    actor User as Usuario
+    participant API as FastAPI
+    participant DB as PostgreSQL
+    participant Worker as Celery Worker
+    participant Gateway as Mock Payment Gateway
+
+    User->>API: POST /api/v5.0/orders (Crear orden desde Carrito)
+    activate API
+    API->>DB: Lock Skins (FOR UPDATE) & Verificar Stock
+    API->>DB: Incrementar stock_reserved, crear Order (PENDING_PAYMENT)
+    API->>Worker: Programar expire_stale_reservations (Countdown: 600s)
+    API-->>User: 201 Created (Order ID, expires_at: now + 10m)
+    deactivate API
+
+    User->>API: POST /api/v5.0/checkout (Iniciar pago)
+    activate API
+    API->>DB: Crear registro PaymentsTable (PENDING)
+    API-->>User: 200 OK (payment_id, mock checkout_url, webhook payload firmado)
+    deactivate API
+
+    Note over Gateway: Simulación externa de cobro
+    Gateway->>API: POST /webhooks/payments (X-Signature HMAC-SHA256)
+    activate API
+    API->>API: Validar HMAC-SHA256 con WEBHOOK_SECRET
+    API->>DB: Verificar Idempotencia (ProcessedWebhookEventsTable)
+    API->>DB: Validar estado de orden y vigencia (not expired)
+    alt Pago Succeeded
+        API->>DB: Order -> PAYMENT_CONFIRMED, Payment -> SUCCEEDED
+        API->>DB: stock_reserved -= qty, stock_sold += qty
+        API->>DB: Crear registros en InventoryItemsTable
+    else Pago Failed
+        API->>DB: Order -> PAYMENT_FAILED, Payment -> FAILED
+        API->>DB: stock_reserved -= qty (liberar stock)
+    end
+    API->>DB: Registrar event_id en processedwebhooksstable
+    API-->>Gateway: 200 OK
+    deactivate API
 ```
 
-The checkout process is intended to:
+### 3. Seguridad Criptográfica en Webhooks
 
-1. Authenticate the user and load their cart.
-2. Validate the requested items and quantities.
-3. Start a database transaction.
-4. Lock the relevant inventory records or use an equivalent atomic concurrency-control strategy.
-5. Verify that sufficient stock remains available.
-6. Create the order, order items, and stock reservations.
-7. Preserve the purchase-time price of each item.
-8. Clear the cart only when checkout succeeds.
-9. Commit the transaction.
-10. Initiate the simulated payment workflow.
-11. Complete the order and deliver the items after successful payment.
+Los webhooks asíncronos son vectores de ataque comunes si no se autentican. Para mitigar falsificaciones:
+1. **Firma HMAC-SHA256**: La pasarela calcula un hash criptográfico sobre el cuerpo HTTP crudo utilizando una clave compartida (`WEBHOOK_SECRET`).
+2. **Validación en Tiempo Constante**: Se valida la firma con `hmac.compare_digest` para neutralizar ataques de temporización (*timing attacks*).
+3. **Idempotencia Transaccional**: La tabla `processedwebhooksstable` registra el `event_id`. Si la pasarela reintenta el webhook por latencia de red, el sistema detecta el duplicado y responde `already_processed` de inmediato sin duplicar ítems ni transferir stock por segunda vez.
 
-If any required stock reservation fails, the checkout must not leave behind a partially reserved cart.
+### 4. Workers Asíncronos para Expiración de Reservas
 
-## 🔒 Inventory and Concurrency
+Si un usuario abandona el proceso de pago, el stock reservado no puede quedar bloqueado indefinidamente.
+- Al crear la orden, se despacha una tarea diferida de Celery: `expire_stale_reservations.apply_async(countdown=600)`.
+- Si la orden continúa en `pending_payment` tras 10 minutos, el worker cambia el estado a `cancelled` y reintegra el `stock_reserved` al inventario disponible de forma segura.
 
-Concurrency control is one of the central engineering goals of Nexus Market.
+---
 
-Consider a limited drop with the following inventory:
+## 🛠️ Stack Tecnológico
 
-- Total stock: 10 units
-- Available stock: 10 units
-- Concurrent purchase attempts: 100
+| Capa / Herramienta | Tecnología | Justificación Técnica |
+|---|---|---|
+| **Lenguaje** | Python 3.12+ | Tipado estricto, alto desempeño y sintaxis moderna. |
+| **Framework API** | FastAPI | Validación automática por schemas con Pydantic v2 y rendimiento asíncrono. |
+| **ORM & Database** | SQLAlchemy 2.0 & PostgreSQL 15 | Control granular de transacciones ACID, tipos nativos (Enum, Decimal, UUID) y soporte de `FOR UPDATE`. |
+| **Migraciones** | Alembic | Versionado declarativo e incremental de base de datos. |
+| **Autenticación** | OAuth2 + JWT (PyJWT) & Passlib (Bcrypt) | Tokens Bearer sin estado con hash de contraseñas de alta seguridad. |
+| **Cola de Tareas** | Celery 5.4 + Redis 7 | Procesamiento asíncrono y tareas programadas desacopladas del ciclo HTTP. |
+| **Proxy Inverso** | Caddy 2 | Enrutamiento perimetral, compresión y soporte TLS. |
+| **Métricas** | Prometheus Client | Exposición de métricas de negocio y latencias en `/metrics`. |
+| **Visualización** | Grafana 10+ | Dashboards unificados de rendimiento, órdenes y tasas de error. |
+| **Logging Centralizado** | Grafana Alloy + Loki | Ingesta y consulta estructurada de logs en formato JSON. |
+| **Testing** | Pytest + TestClient + Factory mocks | Pruebas unitarias, de integración, cobertura de API y pruebas de concurrencia real multi-hilo. |
 
-The expected behavior is that no more than 10 units can be successfully reserved. The remaining requests must be rejected or handled according to the application's inventory policy.
+---
 
-### Inventory invariant
-
-The system must preserve:
-
-```text
-stock_sold + stock_reserved <= stock_total
-```
-
-Available stock is calculated as:
+## 📁 Estructura del Proyecto
 
 ```text
-available_stock = stock_total - stock_sold - stock_reserved
-```
-
-### Intended approach
-
-The implementation will use PostgreSQL transactions and appropriate concurrency controls to prevent competing requests from reserving the same units.
-
-Depending on the operation, this may involve row-level locking with `SELECT ... FOR UPDATE`, atomic conditional updates, or a combination of database constraints and transaction logic.
-
-The essential requirement is that checking availability and reserving stock cannot be separated into an unsafe read-then-write sequence.
-
-### Reservation lifecycle
-
-A reservation temporarily holds inventory while a payment is pending.
-
-- **Created:** available stock decreases.
-- **Confirmed:** reserved stock is converted into sold stock.
-- **Failed or expired:** the reservation is released and the stock becomes available again.
-
-Reservations are intended to expire after a configurable period, such as 10 minutes.
-
-The final implementation must ensure that payment confirmation and reservation expiration cannot both successfully finalize conflicting outcomes.
-
-### Concurrency test objective
-
-A key acceptance test will submit 100 concurrent purchase attempts against 10 available units.
-
-Expected result:
-
-- Successful reservations: 10
-- Rejected attempts due to unavailable stock: 90
-- Oversold inventory: 0
-
-These are target results, not a claim that the test has already passed. Actual results should be documented after running the test against the real database configuration.
-
-## 📦 Orders and Payments
-
-### Order lifecycle
-
-Orders will follow explicit state transitions rather than allowing arbitrary status changes.
-
-| State | Meaning |
-|---|---|
-| `PENDING_PAYMENT` | The order has been created and awaits payment |
-| `PAYMENT_CONFIRMED` | The payment has been confirmed |
-| `PAYMENT_FAILED` | The payment attempt has failed |
-| `CANCELLED` | The order has been cancelled |
-| `EXPIRED` | The payment or reservation deadline has expired |
-| `COMPLETED` | The purchase has been finalized and the inventory delivered |
-
-Only valid transitions will be permitted. For example, a completed order must not return to `PENDING_PAYMENT`.
-
-The implementation should define the exact transitions and their transactional effects in one clearly identifiable part of the business logic.
-
-### Price snapshots
-
-Each order item will store the unit price applied when the order was created.
-
-This prevents historical orders from changing when catalog prices are updated.
-
-For example, if an item was purchased for `$9.99` and its catalog price later increases to `$19.99`, the existing order must retain the original `$9.99` unit price.
-
-### Simulated payment provider
-
-The project will use a mock payment provider instead of processing real money.
-
-The simulated provider will support successful and failed payment outcomes and notify the application through a webhook endpoint.
-
-This allows the backend to demonstrate payment-related state transitions without requiring live payment credentials or real financial transactions.
-
-### Webhook idempotency
-
-Webhook providers may deliver the same event more than once because of retries or network failures.
-
-Nexus Market is designed to record processed webhook event identifiers and ensure that duplicate events do not deliver the same items repeatedly or finalize the same purchase twice.
-
-The intended processing flow is:
-
-1. Receive the webhook.
-2. Verify its signature.
-3. Validate the event and its associated payment.
-4. Detect whether the event has already been processed.
-5. Apply the appropriate state transition transactionally.
-6. Record the processed event.
-7. Return an appropriate response.
-
-The event record and business changes must be committed consistently. Concurrent deliveries of the same event must also be handled safely.
-
-## 🔐 Authentication and Security
-
-The intended security model includes:
-
-- Password hashing instead of storing plaintext passwords.
-- JWT access tokens and refresh tokens.
-- User and administrator roles.
-- Protected endpoints for personal orders and inventory.
-- Ownership checks when accessing individual resources.
-- Request validation for identifiers, quantities, prices, and state transitions.
-- Webhook signature verification.
-- Environment-based configuration for secrets.
-- Consistent error responses without exposing sensitive internal details.
-
-Authentication alone is not sufficient for authorization. For example, a user must not be able to access another user's order simply by changing the order ID in the request.
-
-Administrator-only operations will manage catalog items, stock, and limited drops.
-
-Payment signatures, passwords, access tokens, and other secrets must never be written to application logs.
-
-## 🗄️ Database Design
-
-The planned relational model includes the following entities:
-
-| Entity | Responsibility |
-|---|---|
-| `users` | User accounts, password hashes, and roles |
-| `skins` | Catalog items, prices, rarity, and stock information |
-| `carts` | Shopping carts associated with users |
-| `cart_items` | Items and quantities in each cart |
-| `orders` | Order ownership, status, total, and expiration |
-| `order_items` | Purchased items, quantities, and price snapshots |
-| `payments` | Payment identifiers, amounts, and statuses |
-| `reservations` | Temporarily reserved inventory |
-| `inventory_items` | Digital items acquired by users |
-| `processed_webhook_events` | Webhook event identifiers used for deduplication |
-
-The exact schema, indexes, foreign keys, unique constraints, and transaction boundaries will be documented alongside the implementation.
-
-### Data integrity considerations
-
-- Order items reference their parent orders.
-- Prices and totals are validated and represented using appropriate decimal types rather than floating-point arithmetic.
-- Historical purchase prices are stored independently of current catalog prices.
-- Database constraints protect critical relationships and uniqueness requirements.
-- Stock changes occur within controlled transactions.
-- Alembic migrations manage schema evolution.
-
-PostgreSQL is the authoritative store for the commerce workflow.
-
-## ⚙️ Background Processing
-
-Celery and Redis will support work that should not unnecessarily block HTTP requests.
-
-Planned tasks include:
-
-- Processing simulated payment operations.
-- Expiring outstanding reservations.
-- Sending purchase confirmation notifications.
-- Reconciling pending orders.
-
-Background tasks must account for retries and potential duplicate execution. A retry must not cause duplicate inventory delivery or an invalid order transition.
-
-Celery is used where asynchronous processing provides a practical benefit, not as a replacement for ordinary synchronous business logic.
-
-## 📊 Observability
-
-The project aims to provide useful operational visibility rather than simply including monitoring tools in the technology stack.
-
-### Prometheus
-
-Planned application metrics include:
-
-- HTTP request counts and latency.
-- HTTP error rates.
-- Orders created and completed.
-- Successful and failed payments.
-- Stock reservation failures.
-- Background task outcomes and execution duration.
-
-Metric names and labels will be finalized during implementation. Labels should avoid unbounded values such as individual user IDs or order IDs.
-
-### Grafana
-
-The planned dashboard will organize metrics into three areas:
-
-**API performance**
-- Request volume
-- Latency
-- Error rates
-
-**Commerce**
-- Order outcomes
-- Payment outcomes
-- Reservation failures
-
-**Background processing**
-- Task success and failure counts
-- Task execution duration
-
-### Loki and structured logging
-
-Application logs should use structured fields to make related events easier to investigate.
-
-Examples of useful events include:
-
-- `order.created`
-- `payment.completed`
-- `payment.failed`
-- `stock.reserved`
-- `stock.reservation_failed`
-- `webhook.processed`
-
-Where appropriate, logs will include a request ID and relevant operation identifiers. Sensitive credentials and tokens will be excluded.
-
-## 🧪 Testing Strategy
-
-The testing strategy is designed to verify both business behavior and the correctness of database operations.
-
-| Test level | Primary purpose |
-|---|---|
-| Unit tests | Validate business rules and state transitions in isolation |
-| API tests | Verify HTTP responses, validation, authentication, and authorization |
-| Integration tests | Exercise persistence and workflows against real dependencies |
-| Concurrency tests | Verify that simultaneous purchases cannot oversell inventory |
-
-### Important test scenarios
-
-- User registration and authentication.
-- Access restrictions for administrative endpoints.
-- Order ownership and authorization.
-- Cart validation and price calculations.
-- Successful and failed checkout operations.
-- Transaction rollback when a reservation fails.
-- Reservation expiration and stock release.
-- Duplicate payment webhook delivery.
-- Inventory delivery after successful payment.
-- Background task retries.
-- Simultaneous purchase attempts against limited stock.
-
-Critical inventory and locking tests should run against PostgreSQL with the required schema and database features. SQLite alone is not sufficient to validate PostgreSQL-specific locking behavior.
-
-Redis and Celery integration tests should use the actual services when their behavior is part of what the test intends to verify.
-
-The goal is to run the appropriate tests automatically in CI and make failures reproducible.
-
-## 📁 Project Structure
-
-The following is the proposed organization. The final structure may change as the implementation evolves.
-
-```text
-nexus-market/
+Marketplace-API/
 ├── app/
 │   ├── api/
-│   │   ├── routes/
-│   │   ├── dependencies/
-│   │   └── middleware/
+│   │   ├── dependencies/       # Inyección de dependencias (Auth, DB, Services)
+│   │   ├── middleware/         # Observabilidad y Correlation ID
+│   │   └── routers/            # Controladores HTTP (Auth, Cart, Catalog, Orders, Webhook)
 │   ├── core/
-│   │   ├── config.py
-│   │   ├── security.py
-│   │   └── logging.py
-│   ├── models/
-│   ├── schemas/
-│   ├── repositories/
-│   ├── services/
-│   ├── tasks/
+│   │   ├── config.py           # Variables de entorno validadas con Pydantic Settings
+│   │   ├── exceptions.py       # Excepciones de negocio personalizadas
+│   │   ├── logging.py          # Configuración de logs estructurados en JSON
+│   │   └── security.py         # Hashing Bcrypt, generación y validación de JWT
 │   ├── db/
-│   │   ├── session.py
-│   │   └── migrations/
-│   ├── observability/
-│   └── main.py
+│   │   └── session.py          # Engine de SQLAlchemy y generador de sesiones
+│   ├── models/
+│   │   └── models.py           # Modelos ORM (Users, Skins, Orders, Payments, Inventory)
+│   ├── repositories/           # Capa de acceso a datos pura (Skins, Orders, Payments, Cart)
+│   ├── schemas/                # Modelos Pydantic de entrada/salida (DTOs)
+│   ├── services/               # Lógica de negocio (OrderService, PaymentService, etc.)
+│   ├── tasks/                  # Tareas asíncronas de Celery (expire_stale_reservations)
+│   ├── worker/                 # Configuración de Celery App
+│   └── main.py                 # Punto de entrada de FastAPI
+├── alembic/                    # Scripts de migraciones de base de datos
+├── alloy/                      # Configuración de Grafana Alloy
+├── grafana/                    # Provisionamiento de Datasources para Grafana
+├── loki/                       # Configuración de Grafana Loki
 ├── tests/
-│   ├── unit/
-│   ├── api/
-│   ├── integration/
-│   └── concurrency/
-├── prometheus/
-├── grafana/
-├── docker-compose.yml
-├── Dockerfile
-├── .env.example
-├── .gitignore
+│   ├── api/                    # Pruebas de endpoints y de concurrencia con ThreadPoolExecutor
+│   ├── integration/            # Pruebas de integración de repositorios y base de datos
+│   ├── unit/                   # Pruebas unitarias de servicios y seguridad
+│   └── conftest.py             # Fixtures de Pytest, DB de pruebas y clientes
+├── create_admin.py             # Script de inicialización de superusuario
+├── docker-compose.yml          # Orquestación de contenedores para producción/staging
+├── requirements.txt            # Dependencias del proyecto
 └── README.md
 ```
 
-## 🚀 Getting Started
+---
 
-The following is the intended local development workflow. Commands and configuration should be adjusted to match the files that actually exist in the repository.
+## 🌐 Catálogo de Endpoints de la API
 
-### Prerequisites
+La API expone sus rutas principales bajo el prefijo `/api/v5.0` y el webhook bajo `/webhooks`.
 
-- Python 3.12 or a compatible project-supported version.
-- Docker and Docker Compose.
-- Git.
+### 🔑 Autenticación & Usuarios
+- `POST /api/v5.0/auth/register` — Registro de nuevo usuario (retorna Access + Refresh Tokens).
+- `POST /api/v5.0/auth/login` — Autenticación con formulario OAuth2 (retorna Access + Refresh Tokens).
+- `POST /api/v5.0/auth/refresh` — Renovación de token JWT mediante Refresh Token válido.
+- `GET /api/v5.0/auth/me` — Perfil y datos del usuario autenticado actual.
 
-### 1. Clone the repository
+### 🎨 Catálogo de Skins
+- `GET /api/v5.0/skins` — Listado con soporte de filtros (`category`, `rarity`, `currency`, `is_limited`) y paginación (`page`, `page_size`).
+- `GET /api/v5.0/skins/{skin_id}` — Detalle de una skin activa.
+- `POST /api/v5.0/skins` — *[Admin]* Creación de nuevo cosmético o drop limitado.
+- `PATCH /api/v5.0/skins/{skin_id}` — *[Admin]* Actualización de precio, descripción o estado.
+- `DELETE /api/v5.0/skins/{skin_id}` — *[Admin]* Desactivación lógica de una skin.
 
+### 🛒 Carrito de Compras
+- `GET /api/v5.0/cart` — Obtener el carrito activo del usuario y subtotal acumulado.
+- `POST /api/v5.0/cart/items` — Agregar una skin al carrito con cantidad solicitada.
+- `PATCH /api/v5.0/cart/items/{item_id}` — Actualizar cantidad de un ítem en el carrito.
+- `DELETE /api/v5.0/cart/items/{item_id}` — Remover un ítem del carrito.
+
+### 📦 Órdenes y Checkout
+- `POST /api/v5.0/orders` — **Crear orden a partir del carrito**. Reserva atómicamente el stock bajo candado pesimista y programa la expiración asíncrona a 10 min.
+- `GET /api/v5.0/orders` — Listado de órdenes del usuario autenticado.
+- `GET /api/v5.0/orders/{order_id}` — Consulta detallada de una orden.
+- `POST /api/v5.0/checkout` — Inicia el proceso de pago, persiste el registro en `PaymentsTable` (`pending`) y genera el payload simulado con firma HMAC.
+
+### 💳 Webhook de Pagos
+- `POST /webhooks/payments` — Recibe eventos asíncronos de la pasarela de pagos.
+  - **Header requerido**: `X-Signature: <hex_hmac_sha256>`.
+  - Procesa estados `succeeded` y `failed`.
+  - Garantiza idempotencia mediante `event_id`.
+
+### 🎒 Inventario de Usuario
+- `GET /api/v5.0/inventory/user` — Consulta los cosméticos efectivamente adquiridos y acreditados al usuario tras pagos confirmados.
+- `GET /api/v5.0/inventory/{inventory_item_id}` — Detalle de un ítem del inventario propio.
+
+### 📊 Salud y Observabilidad
+- `GET /health` — Health check simple del servicio (`{"status": "ok"}`).
+- `GET /metrics` — Exposición de métricas en formato estándar Prometheus.
+
+---
+
+## 📈 Observabilidad, Métricas y Logs
+
+El proyecto incorpora un stack completo de observabilidad para monitorizar el estado interno de la aplicación en producción:
+
+### Métricas Prometheus Personalizadas
+- `http_requests_total`: Conteo total de solicitudes HTTP segmentadas por método, ruta y código de estado.
+- `http_request_duration_seconds`: Histograma de latencia de las respuestas HTTP.
+- `orders_created_total`: Total de órdenes generadas por estado.
+- `payments_total`: Total de transacciones de pago procesadas por estado (`succeeded`, `failed`).
+- `stock_reservation_failures_total`: Contador de fallos por stock insuficiente durante compras concurrentes.
+- `tasks_created_total`: Métrica de tareas asíncronas despachadas hacia Celery.
+
+### Logging Estructurado con Grafana Loki & Alloy
+Todos los eventos importantes de la aplicación (creación de órdenes, eventos de webhook, rollback de reservas y autenticaciones) se emiten en formato JSON estructurado con contexto enriquecido (`event_type`, `order_id`, `payment_id`, `user_id`), capturados de forma transparente por **Grafana Alloy** y agregados en **Loki**.
+
+---
+
+## 🐳 Puesta en Marcha con Docker Compose
+
+La arquitectura completa (API, base de datos de producción, base de datos de test, Redis, Worker de Celery, Caddy, Prometheus, Grafana, Loki y Alloy) se levanta con un solo comando:
+
+### 1. Clonar el repositorio y configurar variables
 ```bash
-git clone https://github.com/AndresPimentel-dev/Nexus-Market.git
-cd Nexus-Market
-```
-
-Replace the repository URL if the final GitHub repository uses a different name or location.
-
-### 2. Configure environment variables
-
-Create a local environment file from the example:
-
-```bash
+git clone https://github.com/AndresPimentel-dev/Marketplace-API.git
+cd Marketplace-API
 cp .env.example .env
 ```
 
-Populate the required values in `.env`. Never commit real credentials or production secrets.
+Configura tu archivo `.env` según tus necesidades:
+```env
+POSTGRES_USER=admin_market
+POSTGRES_PASSWORD=super_secure_password
+SECRET_KEY=clave_secreta_jwt_para_firmar_tokens_de_produccion_2026
+WEBHOOK_SECRET=super_webhook_secret_key
+ADMIN_EMAIL=admin@nexusmarket.com
+ADMIN_PASSWORD=admin_master_password
+```
 
-### 3. Start the services
-
-Once the Docker Compose configuration is implemented:
-
+### 2. Iniciar los servicios
 ```bash
 docker compose up --build -d
 ```
 
-### 4. Apply database migrations
+Durante el arranque:
+1. PostgreSQL inicializa la base de datos principal y de tests.
+2. El contenedor `migrations` corre `alembic upgrade head` y genera automáticamente el superadministrador inicial con `create_admin.py`.
+3. El contenedor `tests_and_quality` corre la suite completa de pruebas (`pytest`, `ruff check`, `ruff format --check`) antes de habilitar el servicio de API.
+4. El contenedor de API y el Worker Celery inician con sus dependencias listas.
 
-If Alembic has been configured in the application:
-
-```bash
-docker compose exec api alembic upgrade head
-```
-
-### 5. Inspect the application
-
-Once the API is running and the relevant routes are configured, FastAPI's interactive documentation is typically available at:
-
-```text
-http://localhost:443/docs
-```
-
-The commands above describe the expected workflow. They are not guaranteed to work until the corresponding Docker, environment, and migration configuration has been implemented.
-
-## 🔧 Environment Configuration
-
-The application will use environment variables for configuration. The exact variable names should match the settings implementation.
-
-Example of the configuration categories:
-
-```dotenv
-POSTGRES_USER=POSTGRES_USER_EXAMPLe
-POSTGRES_PASSWORD=POSTGRES_PASSWORD_EXAMPLE
-SECRET_KEY=SECRET_KEY_EXAMPLE
-ADMIN_EMAIL=ADMIN_EMAIL@EXAMPLE.COM
-ADMIN_PASSWORD=ADMIN_PASSWORD_EXAMPLE
-```
-
-These values are illustrative. The final configuration must define the actual required variables, defaults, validation rules, and secret-management practices.
-
-Use separate configuration for local development and CI where appropriate. Do not reuse example secrets in a public deployment.
-
-## 📖 API Documentation
-
-The API is intended to expose REST endpoints grouped by domain.
-
-| Method | Endpoint | Purpose |
-|---|---|---|
-| `POST` | `/auth/register` | Register an account |
-| `POST` | `/auth/login` | Authenticate a user |
-| `POST` | `/auth/refresh` | Refresh an access token |
-| `GET` | `/auth/me` | Retrieve the current user's profile |
-| `GET` | `/skins` | Browse the cosmetics catalog |
-| `GET` | `/skins/{skin_id}` | Retrieve a catalog item |
-| `GET` | `/cart` | Retrieve the current user's cart |
-| `POST` | `/cart/items` | Add an item to the cart |
-| `PATCH` | `/cart/items/{item_id}` | Update a cart item |
-| `DELETE` | `/cart/items/{item_id}` | Remove a cart item |
-| `POST` | `/orders` | Initiate checkout and create an order |
-| `GET` | `/orders` | List the current user's orders |
-| `GET` | `/orders/{order_id}` | Retrieve an order |
-| `GET` | `/inventory` | Retrieve the user's digital inventory |
-| `POST` | `/admin/skins` | Create a catalog item |
-| `PATCH` | `/admin/skins/{skin_id}` | Update a catalog item |
-| `POST` | `/admin/drops` | Create a limited drop |
-| `POST` | `/webhooks/payments` | Receive simulated payment events |
-
-This is the planned endpoint surface, not a guarantee that every route is currently available. Actual request schemas, response formats, status codes, and authorization requirements should be documented in the generated API specification.
-
-## 🔄 Continuous Integration
-
-The intended CI pipeline will validate changes before they are merged.
-
-Planned checks include:
-
-1. Install project dependencies.
-2. Run linting and formatting checks.
-3. Run static type checks where configured.
-4. Execute unit tests.
-5. Start the required services for integration tests.
-6. Run API, database, and concurrency tests.
-7. Build the Docker image.
-
-The pipeline will use disposable test infrastructure where required, including PostgreSQL and Redis. Tests must not depend on production credentials or production data.
-
-The initial goal is a reliable, reproducible CI pipeline, not an unnecessarily complex deployment platform.
-
-## 🧠 Architecture Decisions
-
-Several design choices are central to the project.
-
-### PostgreSQL as the source of truth
-
-Orders, payments, and inventory require durable persistence and transactional guarantees. Redis may support background processing and caching, but it does not replace PostgreSQL for authoritative commerce state.
-
-### Reservations instead of immediate sales
-
-Inventory is temporarily reserved during checkout so that concurrent purchases cannot claim the same available units.
-
-### Idempotent payment handling
-
-Payment events can be delivered more than once. Persisted event tracking and transactional state transitions are intended to prevent duplicate processing from causing duplicate side effects.
-
-### A modular monolith instead of microservices
-
-The project will keep business domains separated within one application. This reduces deployment and operational complexity while preserving clear boundaries for testing and maintenance.
-
-### A mock payment provider instead of real payments
-
-Simulated payments allow the project to focus on backend workflow correctness without handling actual financial transactions or requiring live payment credentials.
-
-Detailed Architecture Decision Records can be maintained under `docs/adr/` as the implementation progresses.
-
-## 🗺️ Roadmap
-
-The development plan prioritizes working functionality before infrastructure polish.
-
-- [ ] **Phase 1 — Foundation:** Application setup, configuration, PostgreSQL, SQLAlchemy, Alembic, and authentication.
-- [ ] **Phase 2 — Catalog:** Cosmetics, categories, rarity, filtering, pagination, and administrative operations.
-- [ ] **Phase 3 — Cart and orders:** Cart management, order creation, order items, and price snapshots.
-- [ ] **Phase 4 — Inventory consistency:** Stock reservations, transactions, concurrency control, and overselling tests.
-- [ ] **Phase 5 — Payments:** Simulated provider, payment states, signed webhooks, and idempotency.
-- [ ] **Phase 6 — Background processing:** Celery tasks, Redis, reservation expiration, and retry-safe operations.
-- [ ] **Phase 7 — Testing and CI:** Automated test suites, real dependency integration tests, and Docker image validation.
-- [ ] **Phase 8 — Observability:** Structured logs, request IDs, Prometheus metrics, Grafana dashboards, and Loki integration.
-- [ ] **Phase 9 — Documentation and deployment:** Verified setup instructions, API examples, architecture decisions, and a reproducible demonstration.
-
-A phase should be considered complete only when its behavior is implemented and verified, not merely when its dependencies have been added.
-
-## ⚠️ Limitations
-
-Nexus Market is a portfolio project, not a production commerce platform.
-
-The intended scope includes simulated payments, a fictional catalog, and a single deployable backend application. It does not claim to provide real payment processing, production-grade fraud prevention, multi-region availability, or the operational guarantees of a mature commercial marketplace.
-
-Security, concurrency, retries, and data consistency remain implementation and testing responsibilities. Using a particular technology does not, by itself, guarantee that those concerns have been solved correctly.
-
-The project will document verified functionality and known limitations as development progresses.
-
-## 👨‍💻 Author
-
-**Andres Pimentel**
-
-Systems Engineering Student | Backend Development
-
-GitHub: [@AndresPimentel-dev](https://github.com/AndresPimentel-dev)
-
-Nexus Market is a personal backend engineering project focused on building practical experience with Python, API design, relational databases, concurrency, asynchronous processing, automated testing, and observability.
+### 3. Accesos y Paneles
+- **Swagger UI / Documentación interactiva:** `http://localhost/docs` (o vía Caddy en puertos `80`/`443`)
+- **Métricas Prometheus:** `http://localhost/metrics`
+- **Grafana:** `http://localhost:3000` (Usuario: `admin` / Password: `admin`)
+  - Dashboards y orígenes de datos (Prometheus y Loki) preconfigurados.
 
 ---
 
-*Built to explore the engineering problems behind reliable digital commerce, one transaction at a time.*
-- `webhook.processed`
+## 💻 Configuración Local y Desarrollo
 
-Where appropriate, logs will include a request ID and relevant operation identifiers. Sensitive credentials and tokens will be excluded.
+Para ejecutar el proyecto fuera de contenedores para desarrollo local:
 
-## 🧪 Testing Strategy
-
-The testing strategy is designed to verify both business behavior and the correctness of database operations.
-
-| Test level | Primary purpose |
-|---|---|
-| Unit tests | Validate business rules and state transitions in isolation |
-| API tests | Verify HTTP responses, validation, authentication, and authorization |
-| Integration tests | Exercise persistence and workflows against real dependencies |
-| Concurrency tests | Verify that simultaneous purchases cannot oversell inventory |
-
-### Important test scenarios
-
-- User registration and authentication.
-- Access restrictions for administrative endpoints.
-- Order ownership and authorization.
-- Cart validation and price calculations.
-- Successful and failed checkout operations.
-- Transaction rollback when a reservation fails.
-- Reservation expiration and stock release.
-- Duplicate payment webhook delivery.
-- Inventory delivery after successful payment.
-- Background task retries.
-- Simultaneous purchase attempts against limited stock.
-
-Critical inventory and locking tests should run against PostgreSQL with the required schema and database features. SQLite alone is not sufficient to validate PostgreSQL-specific locking behavior.
-
-Redis and Celery integration tests should use the actual services when their behavior is part of what the test intends to verify.
-
-The goal is to run the appropriate tests automatically in CI and make failures reproducible.
-
-## 📁 Project Structure
-
-The following is the proposed organization. The final structure may change as the implementation evolves.
-
-```text
-nexus-market/
-├── app/
-│   ├── api/
-│   │   ├── routes/
-│   │   ├── dependencies/
-│   │   └── middleware/
-│   ├── core/
-│   │   ├── config.py
-│   │   ├── security.py
-│   │   └── logging.py
-│   ├── models/
-│   ├── schemas/
-│   ├── repositories/
-│   ├── services/
-│   ├── tasks/
-│   ├── db/
-│   │   ├── session.py
-│   │   └── migrations/
-│   ├── observability/
-│   └── main.py
-├── tests/
-│   ├── unit/
-│   ├── api/
-│   ├── integration/
-│   └── concurrency/
-├── docs/
-│   └── adr/
-├── monitoring/
-│   ├── prometheus/
-│   └── grafana/
-├── docker-compose.yml
-├── Dockerfile
-├── .env.example
-├── .gitignore
-├── pyproject.toml
-└── README.md
-```
-
-## 🚀 Getting Started
-
-The following is the intended local development workflow. Commands and configuration should be adjusted to match the files that actually exist in the repository.
-
-### Prerequisites
-
-- Python 3.12 or a compatible project-supported version.
-- Docker and Docker Compose.
-- Git.
-
-### 1. Clone the repository
-
+### 1. Entorno Virtual
 ```bash
-git clone https://github.com/AndresPimentel-dev/Nexus-Market.git
-cd Nexus-Market
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
 ```
 
-Replace the repository URL if the final GitHub repository uses a different name or location.
+### 2. Base de Datos y Redis
+Asegúrate de tener instancias locales de PostgreSQL y Redis en ejecución, y configura tu `.env`:
+```env
+DATABASE_URL=postgresql+psycopg2://usuario:password@localhost:5432/skin_ecomerce
+SECRET_KEY=secret_key_local_development
+WEBHOOK_SECRET=super_webhook_secret_key
+```
 
-### 2. Configure environment variables
-
-Create a local environment file from the example:
-
+### 3. Ejecutar Migraciones y Crear Administrador
 ```bash
-cp .env.example .env
+alembic upgrade head
+python create_admin.py
 ```
 
-Populate the required values in `.env`. Never commit real credentials or production secrets.
-
-### 3. Start the services
-
-Once the Docker Compose configuration is implemented:
-
+### 4. Iniciar Servidor de Desarrollo
 ```bash
-docker compose up --build -d
+uvicorn app.main:app --reload --port 8000
 ```
 
-### 4. Apply database migrations
-
-If Alembic has been configured in the application:
-
+### 5. Iniciar Worker de Celery (Terminal separada)
 ```bash
-docker compose exec api alembic upgrade head
+celery -A app.worker.celery_app.celery_app worker --loglevel=info
 ```
-
-### 5. Inspect the application
-
-Once the API is running and the relevant routes are configured, FastAPI's interactive documentation is typically available at:
-
-```text
-http://localhost:8000/docs
-```
-
-The commands above describe the expected workflow. They are not guaranteed to work until the corresponding Docker, environment, and migration configuration has been implemented.
-
-## 🔧 Environment Configuration
-
-The application will use environment variables for configuration. The exact variable names should match the settings implementation.
-
-Example of the configuration categories:
-
-```dotenv
-APP_ENV=development
-APP_HOST=0.0.0.0
-APP_PORT=8000
-
-DATABASE_URL=postgresql+psycopg://user:password@postgres:5432/nexus_market
-
-REDIS_URL=redis://redis:6379/0
-
-JWT_SECRET_KEY=replace_with_a_secure_random_secret
-JWT_ACCESS_TOKEN_EXPIRE_MINUTES=15
-JWT_REFRESH_TOKEN_EXPIRE_DAYS=7
-
-PAYMENT_WEBHOOK_SECRET=replace_with_a_local_webhook_secret
-```
-
-These values are illustrative. The final configuration must define the actual required variables, defaults, validation rules, and secret-management practices.
-
-Use separate configuration for local development and CI where appropriate. Do not reuse example secrets in a public deployment.
-
-## 📖 API Documentation
-
-The API is intended to expose REST endpoints grouped by domain.
-
-| Method | Endpoint | Purpose |
-|---|---|---|
-| `POST` | `/auth/register` | Register an account |
-| `POST` | `/auth/login` | Authenticate a user |
-| `POST` | `/auth/refresh` | Refresh an access token |
-| `GET` | `/auth/me` | Retrieve the current user's profile |
-| `GET` | `/skins` | Browse the cosmetics catalog |
-| `GET` | `/skins/{skin_id}` | Retrieve a catalog item |
-| `GET` | `/cart` | Retrieve the current user's cart |
-| `POST` | `/cart/items` | Add an item to the cart |
-| `PATCH` | `/cart/items/{item_id}` | Update a cart item |
-| `DELETE` | `/cart/items/{item_id}` | Remove a cart item |
-| `POST` | `/orders` | Initiate checkout and create an order |
-| `GET` | `/orders` | List the current user's orders |
-| `GET` | `/orders/{order_id}` | Retrieve an order |
-| `GET` | `/inventory` | Retrieve the user's digital inventory |
-| `POST` | `/admin/skins` | Create a catalog item |
-| `PATCH` | `/admin/skins/{skin_id}` | Update a catalog item |
-| `POST` | `/admin/drops` | Create a limited drop |
-| `POST` | `/webhooks/payments` | Receive simulated payment events |
-
-This is the planned endpoint surface, not a guarantee that every route is currently available. Actual request schemas, response formats, status codes, and authorization requirements should be documented in the generated API specification.
-
-## 🔄 Continuous Integration
-
-The intended CI pipeline will validate changes before they are merged.
-
-Planned checks include:
-
-1. Install project dependencies.
-2. Run linting and formatting checks.
-3. Run static type checks where configured.
-4. Execute unit tests.
-5. Start the required services for integration tests.
-6. Run API, database, and concurrency tests.
-7. Build the Docker image.
-
-The pipeline will use disposable test infrastructure where required, including PostgreSQL and Redis. Tests must not depend on production credentials or production data.
-
-The initial goal is a reliable, reproducible CI pipeline, not an unnecessarily complex deployment platform.
-
-## 🧠 Architecture Decisions
-
-Several design choices are central to the project.
-
-### PostgreSQL as the source of truth
-
-Orders, payments, and inventory require durable persistence and transactional guarantees. Redis may support background processing and caching, but it does not replace PostgreSQL for authoritative commerce state.
-
-### Reservations instead of immediate sales
-
-Inventory is temporarily reserved during checkout so that concurrent purchases cannot claim the same available units.
-
-### Idempotent payment handling
-
-Payment events can be delivered more than once. Persisted event tracking and transactional state transitions are intended to prevent duplicate processing from causing duplicate side effects.
-
-### A modular monolith instead of microservices
-
-The project will keep business domains separated within one application. This reduces deployment and operational complexity while preserving clear boundaries for testing and maintenance.
-
-### A mock payment provider instead of real payments
-
-Simulated payments allow the project to focus on backend workflow correctness without handling actual financial transactions or requiring live payment credentials.
-
-Detailed Architecture Decision Records can be maintained under `docs/adr/` as the implementation progresses.
-
-## 🗺️ Roadmap
-
-The development plan prioritizes working functionality before infrastructure polish.
-
-- [ ] **Phase 1 — Foundation:** Application setup, configuration, PostgreSQL, SQLAlchemy, Alembic, and authentication.
-- [ ] **Phase 2 — Catalog:** Cosmetics, categories, rarity, filtering, pagination, and administrative operations.
-- [ ] **Phase 3 — Cart and orders:** Cart management, order creation, order items, and price snapshots.
-- [ ] **Phase 4 — Inventory consistency:** Stock reservations, transactions, concurrency control, and overselling tests.
-- [ ] **Phase 5 — Payments:** Simulated provider, payment states, signed webhooks, and idempotency.
-- [ ] **Phase 6 — Background processing:** Celery tasks, Redis, reservation expiration, and retry-safe operations.
-- [ ] **Phase 7 — Testing and CI:** Automated test suites, real dependency integration tests, and Docker image validation.
-- [ ] **Phase 8 — Observability:** Structured logs, request IDs, Prometheus metrics, Grafana dashboards, and Loki integration.
-- [ ] **Phase 9 — Documentation and deployment:** Verified setup instructions, API examples, architecture decisions, and a reproducible demonstration.
-
-A phase should be considered complete only when its behavior is implemented and verified, not merely when its dependencies have been added.
-
-## ⚠️ Limitations
-
-Nexus Market is a portfolio project, not a production commerce platform.
-
-The intended scope includes simulated payments, a fictional catalog, and a single deployable backend application. It does not claim to provide real payment processing, production-grade fraud prevention, multi-region availability, or the operational guarantees of a mature commercial marketplace.
-
-Security, concurrency, retries, and data consistency remain implementation and testing responsibilities. Using a particular technology does not, by itself, guarantee that those concerns have been solved correctly.
-
-The project will document verified functionality and known limitations as development progresses.
-
-## 👨‍💻 Author
-
-**Andres Pimentel**
-
-Systems Engineering Student | Backend Development
-
-GitHub: [@AndresPimentel-dev](https://github.com/AndresPimentel-dev)
-
-Nexus Market is a personal backend engineering project focused on building practical experience with Python, API design, relational databases, concurrency, asynchronous processing, automated testing, and observability.
 
 ---
 
-*Built to explore the engineering problems behind reliable digital commerce, one transaction at a time.*
+## 🧪 Estrategia de Pruebas Automatizadas
+
+La suite de pruebas automatizadas está diseñada para validar el comportamiento del sistema bajo condiciones normales y extremas:
+
+```bash
+# Ejecutar todas las pruebas con pytest
+pytest -v
+
+# Ejecutar únicamente las pruebas de concurrencia
+pytest tests/api/test_concurrency.py -v
+
+# Ejecutar análisis de formato y linting con ruff
+ruff check .
+ruff format --check
+```
+
+### Cobertura de la Suite de Pruebas:
+1. **Pruebas Unitarias (`tests/unit/`)**:
+   - Algoritmos de hashing Bcrypt y validación de contraseñas.
+   - Generación, expiración y decodificación de tokens JWT.
+   - Lógica aislada de servicios con repositorios mockeados.
+2. **Pruebas de Integración (`tests/integration/`)**:
+   - Operaciones reales sobre PostgreSQL/SQLite de prueba.
+   - Inserciones de catálogo, búsquedas con filtros y transacciones de carritos.
+3. **Pruebas de Endpoints de la API (`tests/api/test_api.py`)**:
+   - Flujo completo de registro, login y refresh token.
+   - Flujo de checkout y creación de órdenes.
+   - **Validación del webhook de pagos**: Verificación de rechazo ante firmas ausentes o inválidas (401), procesamiento exitoso (200), manejo de pagos fallidos con liberación de stock y prueba estricta de idempotencia ante payloads duplicados.
+4. **Pruebas de Concurrencia Real (`tests/api/test_concurrency.py`)**:
+   - Dos hilos paralelos (`concurrent.futures.ThreadPoolExecutor`) compitiendo simultáneamente por adquirir las últimas 5 unidades de una skin limitada.
+   - Se valida de forma determinista que solo una orden resulte exitosa (201) y la transacción competidora sea rechazada de inmediato con error de stock insuficiente (400), demostrando la efectividad de `SELECT ... FOR UPDATE`.
+
+---
+
+## 👨‍💻 Autor
+
+**Andres Pimentel**
+- **GitHub:** [@AndresPimentel-dev](https://github.com/AndresPimentel-dev)
+- **Rol:** Backend Developer / Estudiante de Ingeniería de Sistemas
+
+*Proyecto desarrollado con un enfoque riguroso en consistencia transaccional, seguridad en pasarelas de pago y diseño backend de alta disponibilidad.*
