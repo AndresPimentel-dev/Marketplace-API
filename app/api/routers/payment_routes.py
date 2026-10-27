@@ -18,6 +18,7 @@ def get_payment_service(
         payment_repo=PaymentRepository(db),
         order_repo=OrderRepository(db),
         skin_repo=SkinsRepository(db),
+        db=db,
     )
 
 

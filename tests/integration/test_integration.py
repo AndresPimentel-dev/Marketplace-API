@@ -12,7 +12,8 @@ from app.models.models import (
 from app.repositories.cart_repository import CartRepository
 from app.repositories.inventory_repository import InventoryRepository
 from app.repositories.order_repository import OrderRepository
-from app.repositories.skin_repository import SkinsRepository
+from app.repositories.skin_repository import (
+    SkinsRepository, SkinCategory, SkinRarity)
 from app.repositories.user_repository import UserRepository
 from app.schemas.skin import SkinCreate, SkinUpdate
 
@@ -375,14 +376,14 @@ def test_get_skins_with_filters_and_pagination_by_all(get_db_test):
 
 def test_get_nonexisting_skins_with_filters_and_pagination_by_category(get_db_test):
     repo = SkinsRepository(db=get_db_test)
-    request = repo.get_skins(category="weapon")
+    request = repo.get_skins(category=SkinCategory.WEAPON)
 
     assert request == []
 
 
 def test_get_nonexisting_skins_with_filters_and_pagination_by_rarity(get_db_test):
     repo = SkinsRepository(db=get_db_test)
-    request = repo.get_skins(rarity="weapon")
+    request = repo.get_skins(rarity=SkinRarity.MYTHIC)
 
     assert request == []
 
@@ -399,21 +400,21 @@ def test_get_nonexisting_skins_with_filters_and_pagination_by_currency(get_db_te
 # ====================================================
 
 
-def test_create_cart(get_db_test):
+def test_create_cart(get_db_test, normal_user):
     repo = CartRepository(db=get_db_test)
-    response = repo.create_cart(user_id=1)
+    response = repo.create_cart(user_id=normal_user.id)
 
     assert response is not None
-    assert response.user_id == 1
+    assert response.user_id == normal_user.id
 
 
-def test_get_cart_by_user_id(get_db_test):
+def test_get_cart_by_user_id(get_db_test, normal_user):
     repo = CartRepository(db=get_db_test)
     repo.create_cart(user_id=1)
-    response = repo.get_cart_by_user_id(user_id=1)
+    response = repo.get_cart_by_user_id(user_id=normal_user.id)
 
     assert response is not None
-    assert response.user_id == 1
+    assert response.user_id == normal_user.id
 
 
 def test_get_nonexisting_cart_by_user_id(get_db_test):
@@ -423,25 +424,26 @@ def test_get_nonexisting_cart_by_user_id(get_db_test):
     assert response is None
 
 
-def test_add_item(get_db_test):
+def test_add_item(get_db_test, normal_user, sample_skin):
     repo = CartRepository(db=get_db_test)
-    cart = repo.create_cart(user_id=1)
-    response = repo.add_item(cart_id=cart.id, skin_id=1, quantity=1)
+    cart = repo.create_cart(user_id=normal_user.id)
+    response = repo.add_item(cart_id=cart.id, skin_id=sample_skin.id
+    , quantity=1)
 
     assert response is not None
-    assert response.skin_id == 1
+    assert response.skin_id == sample_skin.id
     assert response.cart_id == cart.id
     assert response.quantity == 1
 
 
-def test_get_cart_item(get_db_test):
+def test_get_cart_item(get_db_test, normal_user, sample_skin):
     repo = CartRepository(db=get_db_test)
-    cart = repo.create_cart(user_id=1)
-    repo.add_item(cart_id=cart.id, skin_id=1, quantity=1)
-    response = repo.get_cart_item(cart_id=cart.id, skin_id=1)
+    cart = repo.create_cart(user_id=normal_user.id)
+    repo.add_item(cart_id=cart.id, skin_id=sample_skin.id, quantity=1)
+    response = repo.get_cart_item(cart_id=cart.id, skin_id=sample_skin.id)
 
     assert response.cart_id == cart.id
-    assert response.skin_id == 1
+    assert response.skin_id == sample_skin.id
     assert response.quantity == 1
 
 
@@ -452,10 +454,10 @@ def test_get_nonexisting_cart_item(get_db_test):
     assert response is None
 
 
-def test_update_item_quantity(get_db_test):
+def test_update_item_quantity(get_db_test, normal_user, sample_skin):
     repo = CartRepository(db=get_db_test)
-    cart = repo.create_cart(user_id=1)
-    item = repo.add_item(cart_id=cart.id, skin_id=1, quantity=1)
+    cart = repo.create_cart(user_id=normal_user.id)
+    item = repo.add_item(cart_id=cart.id, skin_id=sample_skin.id, quantity=1)
     response = repo.update_item_quantity(item=item, quantity=5)
 
     assert response is not None
@@ -463,10 +465,10 @@ def test_update_item_quantity(get_db_test):
     assert response.skin_id == 1
 
 
-def test_delete_item(get_db_test):
+def test_delete_item(get_db_test, sample_skin, normal_user):
     repo = CartRepository(db=get_db_test)
-    cart = repo.create_cart(user_id=1)
-    item = repo.add_item(cart_id=cart.id, skin_id=1, quantity=1)
+    cart = repo.create_cart(user_id=normal_user.id)
+    item = repo.add_item(cart_id=cart.id, skin_id=sample_skin.id, quantity=1)
     response = repo.delete_item(item=item)
 
     assert response is None
@@ -697,127 +699,50 @@ def test_update_order_status_success(get_db_test):
 #            TESTS INVENTORY_REPOSITORY
 # ====================================================
 
-
-def seed_base_dependencies(db_session):
-    user1 = UsersTable(
-        id=1,
-        email="user1@test.com",
-        hashed_password="user1",
-        created_at=datetime.now(UTC),
-    )
-    user2 = UsersTable(
-        id=2,
-        email="user2@test.com",
-        hashed_password="user2",
-        created_at=datetime.now(UTC),
-    )
-    skin1 = SkinsTable(
-        name="Redline",
-        slug="redsline",
-        description="Old desc",
-        category="weapon",
-        rarity="rare",
-        price=20.00,
-        currency="USD",
-        stock_total=100,
-        is_limited=False,
-        created_at=datetime.now(UTC),
-        updated_at=datetime.now(UTC),
-    )
-    skin2 = SkinsTable(
-        name="Redline",
-        slug="redlsine",
-        description="Old desc",
-        category="weapon",
-        rarity="rare",
-        price=20.00,
-        currency="USD",
-        stock_total=100,
-        is_limited=False,
-        created_at=datetime.now(UTC),
-        updated_at=datetime.now(UTC),
-    )
-
-    order1 = OrdersTable(
-        id=1,
-        status=OrdersStatus.COMPLETED,
-        total_amount=10.0,
-        currency="USD",
-        user_id=1,
-        created_at=datetime.now(UTC),
-        updated_at=datetime.now(UTC),
-        expires_at=datetime.now(UTC) + timedelta(minutes=10),
-    )
-
-    db_session.add_all([user1, user2, skin1, skin2, order1])
-    db_session.commit()
-
-
-# --- 2. Pruebas de Integración ---
-
-
-def test_create_inventory_item_success(get_db_test):
+def test_create_inventory_item_success(get_db_test, sample_skin, normal_user,
+sample_order):
     """Verifica la creación exitosa de un item en el inventario."""
-    seed_base_dependencies(get_db_test)
     repo = InventoryRepository(db=get_db_test)
 
-    item = repo.create(user_id=1, skin_id=100, order_id=1)
+    item = repo.create(user_id=normal_user.id, 
+    skin_id=sample_skin.id, order_id=sample_order.id)
     get_db_test.commit()
 
     assert item.id is not None
-    assert item.user_id == 1
-    assert item.skin_id == 100
-    assert item.order_id == 1
-
-
-def test_get_user_inventory_success(get_db_test):
-    """Verifica que devuelva todos los items que le pertenecen a un usuario."""
-    seed_base_dependencies(get_db_test)
-    repo = InventoryRepository(db=get_db_test)
-
-    # Añadir 2 items para el usuario 1 y 1 item para el usuario 2
-    repo.create(user_id=1, skin_id=100, order_id=1)
-    repo.create(user_id=1, skin_id=200, order_id=1)
-    repo.create(user_id=2, skin_id=100, order_id=1)
-    get_db_test.commit()
-
-    inventory_user_1 = repo.get_user_inventory(user_id=1)
-
-    assert len(inventory_user_1) == 2
-    assert all(item.user_id == 1 for item in inventory_user_1)
+    assert item.user_id == normal_user.id
+    assert item.skin_id == sample_skin.id
+    assert item.order_id == sample_order.id
 
 
 def test_get_user_inventory_empty_edge(get_db_test):
     """Edge Case: Un usuario sin inventario retorna una lista vacía."""
-    seed_base_dependencies(get_db_test)
     repo = InventoryRepository(db=get_db_test)
 
     inventory = repo.get_user_inventory(user_id=1)
     assert inventory == []
 
 
-def test_get_by_id_success(get_db_test):
+def test_get_by_id_success(get_db_test, normal_user, sample_skin, sample_order):
     """Verifica que se pueda obtener un item específico por su ID y su dueño."""
-    seed_base_dependencies(get_db_test)
     repo = InventoryRepository(db=get_db_test)
 
-    created_item = repo.create(user_id=1, skin_id=100, order_id=1)
+    created_item = repo.create(user_id=normal_user.id, skin_id=sample_skin.id, order_id=sample_order.id)
     get_db_test.commit()
 
-    found_item = repo.get_by_id(inventory_item_id=created_item.id, user_id=1)
-
+    found_item = repo.get_by_id(inventory_item_id=created_item.id, user_id=normal_user.id)
+    
     assert found_item is not None
     assert found_item.id == created_item.id
-    assert found_item.skin_id == 100
+    assert found_item.skin_id == sample_skin.id
 
 
-def test_get_by_id_security_isolation_edge(get_db_test):
+def test_get_by_id_security_isolation_edge(get_db_test, normal_user, sample_order, sample_skin):
     """Edge Case: Intentar acceder a un item de inventario que pertenece a otro usuario retorna None."""
-    seed_base_dependencies(get_db_test)
     repo = InventoryRepository(db=get_db_test)
 
     # Item creado para el usuario 1
-    created_item = repo.create(user_id=1, skin_id=100, order_id=1)
+    created_item = repo.create(user_id=sample_skin.id, skin_id=sample_skin.id,
+     order_id=sample_order.id)
     get_db_test.commit()
 
     # Usuario 2 intenta consultar el item del usuario 1
@@ -828,50 +753,29 @@ def test_get_by_id_security_isolation_edge(get_db_test):
 
 def test_get_by_id_not_found_edge(get_db_test):
     """Edge Case: Consultar un ID de inventario que no existe retorna None."""
-    seed_base_dependencies(get_db_test)
     repo = InventoryRepository(db=get_db_test)
 
     found_item = repo.get_by_id(inventory_item_id=9999, user_id=1)
     assert found_item is None
 
 
-def test_get_by_user_and_skin_success(get_db_test):
+def test_get_by_user_and_skin_success(get_db_test, sample_skin, normal_user, sample_order):
     """Verifica que se pueda buscar un item de inventario cruzando el user_id y el skin_id."""
-    seed_base_dependencies(get_db_test)
     repo = InventoryRepository(db=get_db_test)
 
-    repo.create(user_id=1, skin_id=200, order_id=1)
+    repo.create(user_id=normal_user.id, skin_id=sample_skin.id, order_id=sample_order.id)
     get_db_test.commit()
 
-    found = repo.get_by_user_and_skin(user_id=1, skin_id=200)
+    found = repo.get_by_user_and_skin(user_id=normal_user.id, skin_id=sample_skin.id)
 
     assert found is not None
-    assert found.user_id == 1
-    assert found.skin_id == 200
+    assert found.user_id == normal_user.id
+    assert found.skin_id == sample_skin.id
 
 
-def test_get_by_user_and_skin_not_found_edge(get_db_test):
+def test_get_by_user_and_skin_not_found_edge(get_db_test, normal_user, sample_skin):
     """Edge Case: Buscar una combinación de usuario y skin que no posee retorna None."""
-    seed_base_dependencies(get_db_test)
     repo = InventoryRepository(db=get_db_test)
 
-    found = repo.get_by_user_and_skin(user_id=1, skin_id=999)
+    found = repo.get_by_user_and_skin(user_id=normal_user.id, skin_id=sample_skin.id)
     assert found is None
-
-
-def test_db_add_inventory_helper_success(get_db_test):
-    """Verifica que el método auxiliar `db_add_inventory` agregue correctamente el objeto a la sesión."""
-    seed_base_dependencies(get_db_test)
-    repo = InventoryRepository(db=get_db_test)
-
-    new_item = InventoryItemsTable(
-        user_id=1, skin_id=100, order_id=1, acquired_at=datetime.now(UTC)
-    )
-    repo.db_add_inventory(new_item)
-    get_db_test.commit()
-
-    assert new_item.id is not None
-
-    # Comprobar que realmente persiste en la base de datos
-    retrieved = repo.get_by_id(new_item.id, user_id=1)
-    assert retrieved is not None

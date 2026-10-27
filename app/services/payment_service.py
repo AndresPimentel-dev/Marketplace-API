@@ -14,7 +14,7 @@ from app.repositories.payment_repository import PaymentRepository
 from app.repositories.skin_repository import SkinsRepository
 
 PAYMENT_COUNTER = Counter(
-    "Successfull payments counter", "payment counter", ["status", "description", "id"]
+    "payments_total", "Total payments processed", ["status"]
 )
 
 
@@ -109,9 +109,7 @@ class PaymentService:
         self.payment_repo.mark_event_as_processed(
             event_id=event_id, event_type=f"payment_{status}"
         )
-        PAYMENT_COUNTER.labels(
-            "successfull payment", "payment completed", payment_id
-        ).inc()
+        PAYMENT_COUNTER.labels(status=status).inc()
         logger.info(
             "Payment successful, skin delivered to inventory",
             extra={

@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 
+from app.api.middleware.middleware import observability_middleware
 from app.api.routers.auth_router import router as auth_router
 from app.api.routers.cart_router import router as cart_router
 from app.api.routers.catalog_router import router as catalog_router
@@ -13,6 +14,7 @@ from app.core.exceptions import BusinessException
 # from app.api.routers import users as users_router
 
 app = FastAPI()
+app.middleware("http")(observability_middleware)
 
 
 @app.get("/health")

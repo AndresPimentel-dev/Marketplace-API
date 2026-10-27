@@ -1,19 +1,24 @@
+from ast import YieldFrom
+from yaml import compose_all
+from alembic.config import Config
 import os
+
+from alembic import command
 
 os.environ.setdefault(
     "DATABASE_URL",
-    "sqlite:///./test.db",
+    "sqlite:///mi_db_prueba.db",
 )
 os.environ.setdefault("SECRET_KEY", "supersecretallaveparqatokensfalsosdeprueba")
-
 from datetime import UTC, datetime, timedelta
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
 from app.core.security import create_access_token
+from app.core.config import settings
 from app.db.session import Base, get_db
 from app.main import app
 from app.models.models import (
@@ -26,17 +31,25 @@ from app.models.models import (
     UsersTable,
 )
 
-DB_URL = os.environ["DATABASE_URL"]
+DB_URL = settings.DATABASE_URL
 engine = create_engine(url=DB_URL)
 SessionTesting = sessionmaker(autoflush=False, autocommit=False, bind=engine)
 
 
 @pytest.fixture(autouse=True)
-def create_table():
-    Base.metadata.create_all(bind=engine)
-    yield
-    Base.metadata.drop_all(bind=engine)
+def create_tables():
+    # usamos ahora las migraciones de alembic en la base de datos postgres de pruebas
+    alembic_cfg = Config("alembic.ini")
+    engine = create_engine(url=DB_URL)
 
+    with engine.connect() as connection:
+        connection.execute(text("DROP SCHEMA public CASCADE; CREATE SCHEMA public;"))
+        connection.commit()
+    engine.dispose()
+
+    command.upgrade(alembic_cfg, "head")
+    
+    yield
 
 @pytest.fixture
 def get_db_test():
