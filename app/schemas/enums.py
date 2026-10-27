@@ -12,7 +12,6 @@ class SkinRarity(str, Enum):
 class SkinCategory(str, Enum):
     WEAPON = "weapon"
     CHARACTER = "character"
-    CHARACTHER = "character"
     EMOTE = "emote"
     BANNER = "banner"
     COLLECTIBLE = "collectible"

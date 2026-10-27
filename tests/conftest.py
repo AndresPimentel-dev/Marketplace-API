@@ -42,7 +42,9 @@ def create_tables():
 
     with engine.connect() as connection:
         if engine.dialect.name == "postgresql":
-            connection.execute(text("DROP SCHEMA public CASCADE; CREATE SCHEMA public;"))
+            connection.execute(
+                text("DROP SCHEMA public CASCADE; CREATE SCHEMA public;")
+            )
             connection.commit()
         else:
             Base.metadata.drop_all(bind=connection)
