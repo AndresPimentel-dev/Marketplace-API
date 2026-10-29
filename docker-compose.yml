@@ -52,6 +52,7 @@ services:
       - DATABASE_URL=postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database:5432/skin_ecomerce
       - ADMIN_EMAIL=${ADMIN_EMAIL}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - WEBHOOK_SECRET=${WEBHOOK_SECRET:-example}
       - PYTHONUNBUFFERED=1
     command: >
       sh -c "alembic upgrade head && python create_admin.py"
@@ -117,6 +118,7 @@ services:
     command: celery -A app.worker.celery_app.celery_app worker --loglevel=info
     environment:
       - SECRET_KEY=${SECRET_KEY}
+      - WEBHOOK_SECRET=${WEBHOOK_SECRET:-example}
       - DATABASE_URL=postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database:5432/skin_ecomerce
     depends_on:
       database:
