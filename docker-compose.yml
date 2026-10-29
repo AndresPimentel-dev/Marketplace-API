@@ -64,7 +64,6 @@ services:
     image: ecomerce_app:latest
     container_name: tests_and_quality
     environment:
-      - SECRET_KEY=${SECRET_KEY}
       - DATABASE_URL=postgresql+psycopg2://database_test_user:database_test_password@database_test:5432/skin_ecomerce_test
     command: python -m pytest && ruff check . && ruff format --check
     depends_on:
@@ -88,6 +87,7 @@ services:
     environment:
       - SECRET_KEY=${SECRET_KEY}
       - DATABASE_URL=postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database:5432/skin_ecomerce
+      - WEBHOOK_SECRET=${WEBHOOK_SECRET}
     depends_on:
       database:
         condition: service_healthy

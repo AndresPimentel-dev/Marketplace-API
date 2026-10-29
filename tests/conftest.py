@@ -9,6 +9,7 @@ os.environ.setdefault(
     "sqlite:///mi_db_prueba.db",
 )
 os.environ.setdefault("SECRET_KEY", "supersecretallaveparqatokensfalsosdeprueba")
+os.environ.setdefault("WEBHOOK_SECRET", "afkgbadghfusdakhsdfgaksdaf")
 from datetime import UTC, datetime, timedelta
 
 import pytest
