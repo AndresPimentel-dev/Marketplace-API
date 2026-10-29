@@ -12,6 +12,10 @@ from app.models.models import (
 )
 
 
+# ===================
+# this test must be done in a postgres database because sqlite
+# does not handle concurrency correctly
+# ===================
 def test_concurrency_create_order_endpoint(get_db_test, cliente):
     """agregamos los dos usuarios que competiran concurrentemente por comprar
     la skin limitada para demostrar que SELECT FOR UPDATE evita el oversell"""
@@ -66,7 +70,10 @@ def test_concurrency_create_order_endpoint(get_db_test, cliente):
             "/api/v5.0/orders", headers={"Authorization": f"Bearer {token}"}
         )
 
-    with patch("app.services.order_service.expire_stale_reservations.apply_async"), ThreadPoolExecutor(max_workers=2) as executor:
+    with (
+        patch("app.services.order_service.expire_stale_reservations.apply_async"),
+        ThreadPoolExecutor(max_workers=2) as executor,
+    ):
         future_1 = executor.submit(post_order, token_user_1)
         future_2 = executor.submit(post_order, token_user_2)
         response_1 = future_1.result()

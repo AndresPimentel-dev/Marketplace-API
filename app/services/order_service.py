@@ -60,9 +60,10 @@ class OrderService:
         cart = self.cart_repo.get_cart_by_user_id(user_id=user_id)
         if cart is None or cart.items == []:
             raise ConflictException("Cart Not Found or Empty")
-        currency = (
-            self.skin_repo.get_active_skin_by_id(cart.items[0].skin_id)
-        ).currency
+        to_consult = self.skin_repo.get_active_skin_by_id(cart.items[0].skin_id)
+        if to_consult is None:
+            raise NotFoundException("Skin not found")
+        currency = to_consult.currency
         order_items = []
         total_amount = Decimal("0.00")
         for item in cart.items:
@@ -106,8 +107,8 @@ class OrderService:
         self.cart_repo.delete_all_items(cart=cart)
         new_order = self.order_repo.create_order(order=order)
         # aqui se envia la tarea a redis con la etiqueta de que se ejecute en 600
-        expire_stale_reservations.apply_async(countdown=600)
         self.db.commit()
+        expire_stale_reservations.apply_async(countdown=600)
         ORDERS_COUNTER.labels(status="created").inc()
         WORKER_COUNTER.labels(
             task_name="expire_stale_reservations", status="dispatched"

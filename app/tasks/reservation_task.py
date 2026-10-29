@@ -1,5 +1,7 @@
 from datetime import UTC, datetime
 
+from sqlalchemy import select
+
 from app.core.logging import logger
 from app.db.session import SessionLocal
 from app.models.models import OrdersStatus, OrdersTable, SkinsTable
@@ -17,14 +19,15 @@ def expire_stale_reservations():
         now = datetime.now(UTC)
 
         # 1. Buscar órdenes vencidas en estado PENDING_PAYMENT
-        stale_orders = (
-            db.query(OrdersTable)
-            .filter(
+        stmt = (
+            select(OrdersTable)
+            .where(
                 OrdersTable.status == OrdersStatus.PENDING_PAYMENT,
                 OrdersTable.expires_at < now,
             )
-            .all()
+            .with_for_update()
         )
+        stale_orders = db.scalars(stmt).all()
 
         if not stale_orders:
             return "No stale reservations found."

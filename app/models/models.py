@@ -276,7 +276,7 @@ class ProcessedWebhookEventsTable(Base):
     event_id: Mapped[str] = mapped_column(
         String(100), unique=True, index=True, nullable=False
     )
-    event_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    event_type: Mapped[str] = mapped_column(String(50), nullable=True)
     processed_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )

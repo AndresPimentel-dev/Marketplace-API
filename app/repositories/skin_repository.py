@@ -125,7 +125,7 @@ class SkinsRepository:
     # bloquea la skin par aque no se use si ya esta para otra operacion
     def get_skin_with_lock(self, skin_id: int) -> SkinsTable | None:
         # con el with update se bloquea la consulta a la misma skin por si depronto
-        # ya esta en un proceso de compra no la pueda haceer otro user
+        # ya esta en un proceso de compra no la pueda hacer otro user
         stmt = select(SkinsTable).where(SkinsTable.id == skin_id).with_for_update()
         return self.db.scalars(stmt).first()
 

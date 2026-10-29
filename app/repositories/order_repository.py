@@ -16,6 +16,11 @@ class OrderRepository:
 
         return self.db.scalars(statement=stmt).first()
 
+    def get_order_with_lock_by_id(self, order_id: int) -> OrdersTable | None:
+        stmt = select(OrdersTable).where(OrdersTable.id == order_id).with_for_update()
+
+        return self.db.scalars(statement=stmt).first()
+
     def get_orders_associated_to_user_id(
         self, user_id: int, page: int = 1, page_size: int = 10
     ) -> list[OrdersTable]:

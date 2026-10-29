@@ -1,54 +1,13 @@
-import hashlib
-import hmac
+from fastapi import APIRouter, Depends, Header, Request
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
-from sqlalchemy.orm import Session
-
-from app.core.config import settings
-from app.db.session import get_db
-from app.repositories.order_repository import OrderRepository
-from app.repositories.payment_repository import PaymentRepository
-from app.repositories.skin_repository import SkinsRepository
+from app.api.dependencies.payment_dependencies import (
+    get_payment_service,
+    verify_webhook_signature,
+)
 from app.schemas.payment import PaymentWebhookPayload
 from app.services.payment_service import PaymentService
 
 router = APIRouter(prefix="/webhooks", tags=["Webhooks"])
-
-
-def get_payment_service(
-    db: Session = Depends(get_db),  # noqa: B008
-) -> PaymentService:
-    return PaymentService(
-        payment_repo=PaymentRepository(db),
-        order_repo=OrderRepository(db),
-        skin_repo=SkinsRepository(db),
-        db=db,
-    )
-
-
-def verify_webhook_signature(
-    payload_bytes: bytes, signature_header: str | None
-) -> None:
-    if not signature_header:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Missing webhook signature",
-        )
-
-    expected_signature = hmac.new(
-        settings.WEBHOOK_SECRET.encode("utf-8"),
-        msg=payload_bytes,
-        digestmod=hashlib.sha256,
-    ).hexdigest()
-
-    # Support optional 'sha256=' prefix or direct hex
-    provided = signature_header.removeprefix("sha256=")
-
-    if not hmac.compare_digest(expected_signature, provided):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid webhook signature",
-        )
 
 
 @router.post("/payments", status_code=200)
@@ -60,7 +19,6 @@ async def payment_webhook(
     payment_service: PaymentService = Depends(  # noqa: B008
         get_payment_service
     ),
-    db: Session = Depends(get_db),  # noqa: B008
 ):
     """
     Endpoint que recibe los webhooks asíncronos de la pasarela de pagos simulada.
@@ -78,5 +36,4 @@ async def payment_webhook(
         status=payload.status,
     )
     # Hacer commit explícito de la transacción si todo sale bien
-    db.commit()
     return result
