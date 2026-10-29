@@ -23,7 +23,7 @@ services:
       - POSTGRES_PASSWORD=database_test_password
       - POSTGRES_DB=skin_ecomerce_test
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U database_test_container -d skin_ecomerce_test"]
+      test: ["CMD-SHELL", "pg_isready -U database_test_user -d skin_ecomerce_test"]
       interval: 3s
       timeout: 3s
       retries: 10

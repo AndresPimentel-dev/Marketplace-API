@@ -1,6 +1,6 @@
 # 🎮 Nexus Market — High-Concurrency Gaming Cosmetics Marketplace API
 
-[![Python](https://img.shields.io/badge/Python-3.12+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-4169E1?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 [![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-2.0+-D71F00?logo=sqlalchemy&logoColor=white)](https://www.sqlalchemy.org/)
@@ -192,7 +192,7 @@ Si un usuario abandona el proceso de pago, el stock reservado no puede quedar bl
 
 | Capa / Herramienta | Tecnología | Justificación Técnica |
 |---|---|---|
-| **Lenguaje** | Python 3.12+ | Tipado estricto, alto desempeño y sintaxis moderna. |
+| **Lenguaje** | Python 3.11+ | Tipado estricto, alto desempeño y sintaxis moderna. |
 | **Framework API** | FastAPI | Validación automática por schemas con Pydantic v2 y rendimiento asíncrono. |
 | **ORM & Database** | SQLAlchemy 2.0 & PostgreSQL 15 | Control granular de transacciones ACID, tipos nativos (Enum, Decimal, UUID) y soporte de `FOR UPDATE`. |
 | **Migraciones** | Alembic | Versionado declarativo e incremental de base de datos. |

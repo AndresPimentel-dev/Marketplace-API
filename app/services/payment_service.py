@@ -43,20 +43,7 @@ class PaymentService:
             self.webhook_repo.create_webhook_events(event_id)
         except IntegrityError:
             raise ConflictException("event already processed")
-
         try:
-            if self.payment_repo.is_event_processed(event_id=event_id):
-                logger.error(
-                    "Webhook already processed, ignoring duplicate",
-                    extra={
-                        "props": {"event_type": "webhook.ignored", "event_id": event_id}
-                    },
-                )
-                return {
-                    "status": "already_processed",
-                    "message": "Webhook event already handled.",
-                }
-
             # 2. BUSCAR LA ORDEN
             order = self.order_repo.get_order_with_lock_by_id(order_id=order_id)
             if not order:
@@ -76,10 +63,30 @@ class PaymentService:
                 if now > order_expires_at:
                     order.status = OrdersStatus.CANCELLED
                     order.updated_at = now
+                    for item in order.items:
+                        skin = self.skin_repo.get_skin_with_lock(item.skin_id)
+                        logger.error(
+                            "Payment cancelled, releasing stock reservation",
+                            extra={
+                                "props": {
+                                    "event_type": "payment.failed",
+                                    "order_id": order_id,
+                                    "payment_id": payment_id,
+                                }
+                            },
+                        )
+                        if skin:
+                            skin.stock_reserved = max(
+                                0, skin.stock_reserved - item.quantity
+                            )
+                            skin.updated_at = now
+                    self.db.commit()
                     raise BadRequestException(message="Order has expired")
 
             # 3. VALIDAR IDENTIFICADOR DE PAGO
             payment = self.payment_repo.get_payment_by_payment_id(payment_id=payment_id)
+            if payment is None:
+                raise NotFoundException("payment not found")
             if payment and payment.order_id != order.id:
                 raise BadRequestException(
                     message=f"Payment ID {payment_id} does not belong to order {order_id}"
@@ -161,7 +168,7 @@ class PaymentService:
                 "status": "success",
                 "message": f"Webhook processed successfully for order {order_id}",
             }
-        except (BadRequestException, NotFoundException, Exception) as e:
+        except (BadRequestException, NotFoundException, Exception, IntegrityError) as e:
             # 3. ¡SALVAVIDAS CRUCIAL!
             # Pase lo que pase (error de negocio o error inesperado),
             # limpiamos la transacción y LIBERAMOS EL BLOQUEO FOR UPDATE.
