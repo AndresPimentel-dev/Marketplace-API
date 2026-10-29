@@ -1,4 +1,3 @@
-from ast import keyword
 import os
 
 from alembic.config import Config
@@ -33,7 +32,7 @@ from app.models.models import (
 
 DB_URL = settings.DATABASE_URL
 
-if not any(keyword in DB_URL for keyword in ("test", "prueba")):
+if not any(term in DB_URL for term in ("test", "prueba")):
     raise RuntimeError(
         f"❌ PELIGRO: Intentaste correr las pruebas contra una base de datos que NO es de pruebas.\n"
         f"URL actual: {DB_URL}\n"
