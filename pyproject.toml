@@ -1,0 +1,6 @@
+[tool.ruff]
+# Excluye la carpeta de alembic (ajusta la ruta si se llama diferente)
+exclude = [
+    "alembic/versions/*",
+    "alembic/env.py" # Opcional, este a veces se puede dejar, pero las versiones mejor excluirlas
+]

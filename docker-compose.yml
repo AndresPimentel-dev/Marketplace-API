@@ -1,0 +1,201 @@
+services:
+  database:
+    image: postgres:15-alpine
+    container_name: database_container
+    restart: always
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=skin_ecomerce
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d skin_ecomerce"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+  database_test:
+    image: postgres:15-alpine
+    container_name: database_test_container
+    environment:
+      - POSTGRES_USER=database_test_user
+      - POSTGRES_PASSWORD=database_test_password
+      - POSTGRES_DB=skin_ecomerce_test
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U database_test_user -d skin_ecomerce_test"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis_container
+    restart: always
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 5
+
+  migrations:
+    build: .
+    image: ecomerce_app:latest
+    container_name: database_migrations
+    environment:
+      - SECRET_KEY=${SECRET_KEY}
+      - DATABASE_URL=postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database:5432/skin_ecomerce
+      - ADMIN_EMAIL=${ADMIN_EMAIL}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - WEBHOOK_SECRET=${WEBHOOK_SECRET:-example}
+      - PYTHONUNBUFFERED=1
+    command: >
+      sh -c "alembic upgrade head && python create_admin.py"
+    depends_on:
+      database:
+        condition: service_healthy
+
+  tests_and_quality:
+    build: .
+    image: ecomerce_app:latest
+    container_name: tests_and_quality
+    environment:
+      - DATABASE_URL=postgresql+psycopg2://database_test_user:database_test_password@database_test:5432/skin_ecomerce_test
+    command: python -m pytest && ruff check . && ruff format --check
+    depends_on:
+      database_test:
+        condition: service_healthy
+
+  tests_cleanup:
+    image: docker:cli
+    container_name: database_cleaner
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: docker stop database_test
+    depends_on:
+      tests_and_quality:
+        condition: service_completed_successfully
+  api:
+    build: .
+    image: ecomerce_app:latest
+    container_name: ecomerce_api
+    restart: always
+    environment:
+      - SECRET_KEY=${SECRET_KEY}
+      - DATABASE_URL=postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database:5432/skin_ecomerce
+      - WEBHOOK_SECRET=${WEBHOOK_SECRET:-example}
+    depends_on:
+      database:
+        condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
+      tests_and_quality:
+        condition: service_completed_successfully
+
+  reverse_proxy:
+    container_name: caddy_container
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "443:443"
+      - "80:80"
+    volumes:
+      - caddy_data:/data
+      - ./caddyfile:/etc/caddy/Caddyfile
+    depends_on:
+      - api
+
+  worker:
+    build: .
+    image: ecomerce_app:latest
+    container_name: nexus_worker
+    restart: always
+    command: celery -A app.worker.celery_app.celery_app worker --loglevel=info
+    environment:
+      - SECRET_KEY=${SECRET_KEY}
+      - WEBHOOK_SECRET=${WEBHOOK_SECRET:-example}
+      - DATABASE_URL=postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database:5432/skin_ecomerce
+    depends_on:
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
+
+  worker_beat:
+    build: .
+    image: ecomerce_app:latest
+    container_name: nexus_worker_beat
+    restart: always
+    command: celery -A app.worker.celery_app beat --loglevel=info
+    environment:
+      - SECRET_KEY=${SECRET_KEY}
+      - WEBHOOK_SECRET=${WEBHOOK_SECRET:-example}
+      - DATABASE_URL=postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database:5432/skin_ecomerce
+    depends_on:
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
+  #=====================================================================
+  # observabilidad
+  #=====================================================================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus_container
+    restart: always
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    depends_on:
+      - api
+
+  loki:
+    image: grafana/loki:latest
+    container_name: loki
+    volumes:
+      - ./loki/loki-config.yml:/etc/loki/loki-config.yml
+    command: -config.file=/etc/loki/loki-config.yml
+    restart: always
+
+  alloy:
+    image: grafana/alloy:latest
+    container_name: alloy
+    volumes:
+      - ./alloy/config.alloy:/etc/alloy/config.alloy
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    command:
+      - run
+      - /etc/alloy/config.alloy
+      - --server.http.listen-addr=0.0.0.0:12345
+    depends_on:
+      - loki
+    restart: always
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana_container
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+    depends_on:
+      - prometheus
+      - loki
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources
+
+
+volumes:
+  postgres_data:
+  redis_data:
+  grafana_data:
+  caddy_data:
