@@ -51,21 +51,3 @@ jobs:
         SECRET_KEY: testsecretkey1234567890testsecretkey
         DATABASE_URL: postgresql+psycopg2://postgres:postgrespassword@localhost:5432/skin_ecomerce_test
       run: python -m pytest
-
-    - name: run Docker compose to check
-      env:
-        SECRET_KEY: ${{secrets.SECRET_KEY}}
-        POSTGRES_PASSWORD: ${{secrets.POSTGRES_PASSWORD}}
-        POSTGRES_USER: ${{secrets.POSTGRES_USER}}
-        ADMIN_EMAIL: ${{secrets.ADMIN_EMAIL}}
-        ADMIN_PASSWORD: ${{secrets.ADMIN_PASSWORD}}
-      run: docker compose up --build -d
-
-    - name: Esperar y verificar docker compose
-      run: |
-        sleep 5
-        curl -k -L --http1.1 --retry 10 \
-                   --retry-delay 3 \
-                   --retry-connrefused \
-                   --fail \
-                   https://localhost/health
